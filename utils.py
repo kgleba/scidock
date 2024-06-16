@@ -1,5 +1,6 @@
 import json
 from os import PathLike
+from pathlib import Path
 from typing import Any
 
 
@@ -15,3 +16,13 @@ def load_json(filename: str | PathLike) -> Any:
 def dump_json(data: Any, filename: str | PathLike) -> None:
     with open(filename, 'w', encoding='utf-8') as file:
         json.dump(data, file, ensure_ascii=False)
+
+
+def remove_outdated_repos(repositories: dict) -> dict:
+    up_to_date_repositories = {}
+
+    for repository_name, repository in repositories.items():
+        if Path(repository['path']).exists():
+            up_to_date_repositories[repository_name] = repository
+
+    return up_to_date_repositories

@@ -9,6 +9,8 @@ readme = "README.md"
 python = "^3.12"
 click = "^8.1.7"
 
+[tool.poetry.scripts]
+scidock = "scidock:main"
 
 [build-system]
 requires = ["poetry-core"]

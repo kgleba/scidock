@@ -3,7 +3,7 @@ from pathlib import Path
 
 import click
 
-from utils import dump_json, load_json
+from utils import dump_json, load_json, remove_outdated_repos
 
 
 @click.group()
@@ -13,7 +13,8 @@ def main():
 
 @click.command()
 @click.argument('repository_path', type=click.Path(file_okay=False, path_type=Path))
-def init(repository_path: Path):
+@click.option('--name', type=str, help='Name of the repository. Defaults to the name of the folder')
+def init(repository_path: Path, name: str | None):
     os.makedirs(repository_path, exist_ok=True)
 
     scidock_root = Path('~/.scidock').expanduser()
@@ -25,24 +26,32 @@ def init(repository_path: Path):
     os.makedirs(scidock_repo_root)
     os.makedirs(scidock_root, exist_ok=True)
 
-    # TODO: implement removing outdated repositories
-    # TODO: come up with a solution with the problem of non-consecutive indices
     current_repositories = load_json(scidock_root / 'repositories.json')
-    if current_repositories.get('repositories') is None:
-        new_repository_id = '0'
-        current_repositories['repositories'] = {}
-    else:
-        new_repository_id = str(max(map(int, current_repositories.get('repositories'))) + 1)
+    current_repositories = remove_outdated_repos(current_repositories)
 
-    new_repository_repr = {new_repository_id: {'path': str(scidock_repo_root.absolute())}}
+    if current_repositories.get('repositories') is None:
+        current_repositories['repositories'] = {}
+
+    if name is not None:
+        new_repository_name = name
+    else:
+        parts_included = 1
+        new_repository_name = repository_path.parts[-1]
+        while new_repository_name in current_repositories.get('repositories'):
+            parts_included += 1
+            new_repository_name = '/'.join(repository_path.parts[-parts_included:])
+
+    new_repository_repr = {new_repository_name: {'path': str(scidock_repo_root.absolute())}}
     current_repositories['repositories'].update(new_repository_repr)
-    current_repositories['default'] = new_repository_id
+    current_repositories['default'] = new_repository_name
 
     dump_json({}, scidock_repo_root / 'content.json')
     dump_json(current_repositories, scidock_root / 'repositories.json')
 
+    click.echo('Successfully initialized repository!')
+
+
+main.add_command(init)
 
 if __name__ == '__main__':
-    main.add_command(init)
-
     main()
