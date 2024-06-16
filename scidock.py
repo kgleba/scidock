@@ -27,21 +27,22 @@ def init(repository_path: Path, name: str | None):
     os.makedirs(scidock_root, exist_ok=True)
 
     current_repositories = load_json(scidock_root / 'repositories.json')
-    current_repositories = remove_outdated_repos(current_repositories)
 
     if current_repositories.get('repositories') is None:
         current_repositories['repositories'] = {}
+
+    current_repositories['repositories'] = remove_outdated_repos(current_repositories['repositories'])
 
     if name is not None:
         new_repository_name = name
     else:
         parts_included = 1
-        new_repository_name = repository_path.parts[-1]
-        while new_repository_name in current_repositories.get('repositories'):
+        new_repository_name = repository_path.absolute().parts[-1]
+        while new_repository_name in current_repositories['repositories']:
             parts_included += 1
             new_repository_name = '/'.join(repository_path.parts[-parts_included:])
 
-    new_repository_repr = {new_repository_name: {'path': str(scidock_repo_root.absolute())}}
+    new_repository_repr = {new_repository_name: {'path': str(repository_path.absolute())}}
     current_repositories['repositories'].update(new_repository_repr)
     current_repositories['default'] = new_repository_name
 
