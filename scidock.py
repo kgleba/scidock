@@ -1,9 +1,18 @@
 import os
+from dataclasses import dataclass
 from pathlib import Path
 
 import click
 
+from search_engines import crossref
 from utils import dump_json, load_json, remove_outdated_repos
+
+
+@dataclass
+class CrossRefItem:
+    title: str
+    DOI: str
+    relevance_score: float
 
 
 @click.group()
@@ -52,7 +61,40 @@ def init(repository_path: Path, name: str | None):
     click.echo('Successfully initialized repository!')
 
 
+@click.command()
+@click.argument('query', type=str)
+def search(query: str):
+    # TODO: Suggested Workflow
+    # Users get suggestions based on the relevance score provided by CrossRef
+    # They are also provided with the option to open a pager (like GNU less) and scroll through more data generated on the fly
+    # If nothing is to their liking, we can proceed searching for preprints in arXiv or in Google Scholar
+    # The final goal of the search process is to retrieve the DOI, then one can proceed to the download stage
+
+    # approach of defining the cutoff value
+    search_prefix = []
+    prefix_score_ratios = []
+    prefix_max = -1
+    previous_score = 0
+
+    n_search_results = crossref.search_results_length(query)
+    if n_search_results > 10_000:
+        # TODO: Inquirer Confirm
+        click.echo(f'There are more than {n_search_results} search results. Do you want to make your query more specific?')
+
+    for paper in crossref.search(query):
+        search_result = CrossRefItem(' / '.join(paper['title']), paper['DOI'], paper['score'])
+        search_prefix.append(search_result)
+
+        prefix_max = max(prefix_max, search_result.relevance_score)
+        prefix_score_ratios.append((search_result.relevance_score - previous_score) / prefix_max)
+        if len(search_prefix) >= 10:  # arbitrary number, should be tweaked afterwards
+            best_score_ratio = prefix_score_ratios.index(max(prefix_score_ratios[1:]))
+            print(*search_prefix[:best_score_ratio + 1], sep='\n')
+            break
+
+
 main.add_command(init)
+main.add_command(search)
 
 if __name__ == '__main__':
     main()

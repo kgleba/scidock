@@ -8,6 +8,8 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.12"
 click = "^8.1.7"
+requests = "^2.32.3"
+crossrefapi = "^1.6.0"
 
 [tool.poetry.scripts]
 scidock = "scidock:main"
