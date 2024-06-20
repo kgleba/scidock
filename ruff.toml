@@ -1,0 +1,20 @@
+exclude = [
+    ".git",
+    "scidock-nlp"
+]
+
+line-length = 140
+indent-width = 4
+
+target-version = "py312"
+
+[lint]
+select = ["E", "F", "B", "W", "N", "S", "UP", "A", "COM", "C4", "ISC", "ICN", "G", "RET", "SIM", "TID", "PTH", "PL", "RSE", "RUF", "I"]
+ignore = ["PTH123"]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
