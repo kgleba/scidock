@@ -2,7 +2,7 @@ import re
 from functools import cache
 from typing import Any
 
-import grequests
+import requests
 
 __all__ = ('extract_dois', 'extract_arxiv_ids', 'extract_names', 'extract_keywords', 'simplify_query', 'clear_query')
 
@@ -18,19 +18,12 @@ remote_data = {}
 
 
 def _retrieve_remote_data(query: str, operation: str) -> Any:
+    # updates relevant info about the `query` itself and `clear_query(query)`
     if remote_data.get(query) is None:
-        request_labels = ('extract_names', 'extract_keywords', 'remove_stop_words')
-        requests = [
-            grequests.post(f'{NLP_SERVER}/extract_names', json={'query': query}),
-            grequests.post(f'{NLP_SERVER}/extract_keywords', json={'query': query}),
-            grequests.post(f'{NLP_SERVER}/remove_stop_words', json={'query': query})
-        ]
-        responses = grequests.map(requests)
-
-        remote_data[query] = dict(zip(request_labels, responses))
+        remote_data.update(requests.post(f'{NLP_SERVER}/complex_analysis', json={'query': query}).json())
 
     response = remote_data[query].get(operation)
-    return response.json() if response is not None and response.ok else None
+    return response
 
 
 @cache

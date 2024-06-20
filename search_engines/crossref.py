@@ -1,7 +1,11 @@
 from functools import cache
 from typing import Iterator
 
-import grequests
+import crossref.restful
+import requests
+
+crossref.restful.requests = requests.Session()
+
 from crossref.restful import Etiquette, Works
 
 from ._query_parser import clear_query, extract_dois, extract_keywords, extract_names, simplify_query
