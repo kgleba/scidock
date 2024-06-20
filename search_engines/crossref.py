@@ -1,14 +1,13 @@
+from collections.abc import Iterator
 from functools import cache
-from typing import Iterator
 
 import crossref.restful
 import requests
-
-crossref.restful.requests = requests.Session()
-
 from crossref.restful import Etiquette, Works
 
 from ._query_parser import clear_query, extract_dois, extract_keywords, extract_names, simplify_query
+
+crossref.restful.requests = requests.Session()
 
 __all__ = ('search', 'search_results_length')
 
@@ -48,8 +47,7 @@ def search(query: str) -> Iterator[dict]:
 
     keywords, search_params = _prepare_query_args(query)
     search_query = _perform_query(*keywords, **search_params)
-    for paper_metadata in search_query:
-        yield paper_metadata
+    yield from search_query
 
 
 def search_results_length(query: str) -> int:

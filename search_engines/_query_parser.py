@@ -20,10 +20,9 @@ remote_data = {}
 def _retrieve_remote_data(query: str, operation: str) -> Any:
     # updates relevant info about the `query` itself and `clear_query(query)`
     if remote_data.get(query) is None:
-        remote_data.update(requests.post(f'{NLP_SERVER}/complex_analysis', json={'query': query}).json())
+        remote_data.update(requests.post(f'{NLP_SERVER}/complex_analysis', json={'query': query}, timeout=30).json())
 
-    response = remote_data[query].get(operation)
-    return response
+    return remote_data[query].get(operation)
 
 
 @cache

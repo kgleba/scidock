@@ -1,13 +1,13 @@
 import json
+from functools import cache
 from os import PathLike
 from pathlib import Path
 from typing import Any
-from functools import cache
 
 
 def load_json(filename: str | PathLike) -> Any:
     try:
-        with open(filename, 'r', encoding='utf-8') as file:
+        with open(filename, encoding='utf-8') as file:
             data = json.load(file)
     except (json.decoder.JSONDecodeError, FileNotFoundError):
         data = {}
@@ -36,7 +36,7 @@ def responsive_cache(func):
         return ', '.join(map(repr, args))
 
     def format_kwargs(kwargs) -> str:
-        return ', '.join(f'{k}={repr(v)}' for k, v in kwargs.items())
+        return ', '.join(f'{k}={v!r}' for k, v in kwargs.items())
 
     def notification_wrapper(*args, **kwargs):
         hits = func.cache_info().hits
