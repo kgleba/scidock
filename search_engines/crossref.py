@@ -1,9 +1,12 @@
 from functools import cache
 from typing import Iterator
 
+import grequests
 from crossref.restful import Etiquette, Works
 
 from ._query_parser import clear_query, extract_dois, extract_keywords, extract_names, simplify_query
+
+__all__ = ('search', 'search_results_length')
 
 etiquette = Etiquette('SciDock', '0.1.0', 'https://github.com/kgleba/scidock', 'kgleba@yandex.ru')
 engine = Works(etiquette=etiquette)
@@ -32,9 +35,8 @@ def _prepare_query_args(query: str) -> tuple[list[str], dict[str, str]]:
 
 def search(query: str) -> Iterator[dict]:
     dois = extract_dois(query)
-    if dois is not None:
-        for doi in dois:
-            yield engine.doi(doi)
+    for doi in dois:
+        yield engine.doi(doi)
 
     plain_query = simplify_query(query)
     if not plain_query.strip():

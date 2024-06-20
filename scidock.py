@@ -77,9 +77,9 @@ def search(query: str):
     previous_score = 0
 
     n_search_results = crossref.search_results_length(query)
-    if n_search_results > 10_000:
+    if n_search_results > 10_000:  # arbitrary number, should be tweaked afterwards
         # TODO: Inquirer Confirm
-        click.echo(f'There are more than {n_search_results} search results. Do you want to make your query more specific?')
+        click.echo(f'There are more than {n_search_results:,} search results. Do you want to make your query more specific?')
 
     for paper in crossref.search(query):
         search_result = CrossRefItem(' / '.join(paper['title']), paper['DOI'], paper['score'])
