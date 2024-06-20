@@ -1,4 +1,5 @@
 from collections.abc import Iterator
+from dataclasses import dataclass
 from functools import cache
 
 import crossref.restful
@@ -13,6 +14,16 @@ __all__ = ('search', 'search_results_length')
 
 etiquette = Etiquette('SciDock', '0.1.0', 'https://github.com/kgleba/scidock', 'kgleba@yandex.ru')
 engine = Works(etiquette=etiquette)
+
+
+@dataclass
+class CrossRefItem:
+    title: str
+    DOI: str
+    relevance_score: float
+
+    def __str__(self):
+        return f'{self.title.rstrip('.')}. DOI: {self.DOI}'
 
 
 @cache
@@ -36,7 +47,7 @@ def _prepare_query_args(query: str) -> tuple[list[str], dict[str, str]]:
     return keywords, search_params
 
 
-def search(query: str) -> Iterator[dict]:
+def search(query: str) -> Iterator[CrossRefItem]:
     dois = extract_dois(query)
     for doi in dois:
         yield engine.doi(doi)
@@ -47,7 +58,8 @@ def search(query: str) -> Iterator[dict]:
 
     keywords, search_params = _prepare_query_args(query)
     search_query = _perform_query(*keywords, **search_params)
-    yield from search_query
+    for paper in search_query:
+        yield CrossRefItem(' / '.join(paper['title']), paper['DOI'], paper['score'])
 
 
 def search_results_length(query: str) -> int:

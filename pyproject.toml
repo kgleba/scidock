@@ -8,8 +8,11 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.12"
 click = "^8.1.7"
-requests = "^2.32.3"
+requests = "^2.31.0"
 crossrefapi = "^1.6.0"
+arxiv = "^2.1.0"
+rich = "^13.7.1"
+questionary = "^2.0.1"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.4.9"

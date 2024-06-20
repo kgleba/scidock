@@ -4,6 +4,8 @@ from typing import Any
 
 import requests
 
+from ui import progress_bar
+
 __all__ = ('extract_dois', 'extract_arxiv_ids', 'extract_names', 'extract_keywords', 'simplify_query', 'clear_query')
 
 NLP_SERVER = 'https://kgleba-scidock-nlp.hf.space'
@@ -20,7 +22,9 @@ remote_data = {}
 def _retrieve_remote_data(query: str, operation: str) -> Any:
     # updates relevant info about the `query` itself and `clear_query(query)`
     if remote_data.get(query) is None:
+        progress_bar.update('Parsing your query using AI...')
         remote_data.update(requests.post(f'{NLP_SERVER}/complex_analysis', json={'query': query}, timeout=30).json())
+        progress_bar.revert_status()
 
     return remote_data[query].get(operation)
 
