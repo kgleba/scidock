@@ -1,4 +1,5 @@
 import json
+import random
 from functools import cache
 from os import PathLike
 from pathlib import Path
@@ -19,6 +20,12 @@ def dump_json(data: Any, filename: str | PathLike) -> None:
         json.dump(data, file, ensure_ascii=False)
 
 
+def get_default_repository() -> str | None:
+    scidock_root = Path('~/.scidock').expanduser()
+    repositories = load_json(scidock_root / 'repositories.json')
+    return repositories.get('default')
+
+
 def remove_outdated_repos(repositories: dict) -> dict:
     up_to_date_repositories = {}
 
@@ -27,6 +34,22 @@ def remove_outdated_repos(repositories: dict) -> dict:
             up_to_date_repositories[repository_name] = repository
 
     return up_to_date_repositories
+
+
+def random_chain(*iterables, weights: list[float] | None = None):
+    iterators = [iter(it) for it in iterables]
+
+    while iterators:
+        iterator = random.choices(iterators, weights, k=1)[0]
+
+        try:
+            yield next(iterator)
+        except StopIteration:
+            iterator_index = iterators.index(iterator)
+
+            iterators.pop(iterator_index)
+            if weights is not None:
+                weights.pop(iterator_index)
 
 
 def responsive_cache(func):

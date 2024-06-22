@@ -3,9 +3,10 @@ from pathlib import Path
 import click
 import questionary
 
-from search_engines import crossref
+from search_engines import arxiv_engine as arxiv
+from search_engines import crossref_engine as crossref
 from ui import progress_bar
-from utils import dump_json, load_json, remove_outdated_repos
+from utils import dump_json, load_json, random_chain, remove_outdated_repos
 
 
 @click.group()
@@ -13,9 +14,6 @@ def main():
     pass
 
 
-@click.command()
-@click.argument('repository_path', type=click.Path(file_okay=False, path_type=Path))
-@click.option('--name', type=str, help='Name of the repository. Defaults to the name of the folder')
 def init(repository_path: Path, name: str | None):
     scidock_root = Path('~/.scidock').expanduser()
     scidock_repo_root = repository_path / '.scidock'
@@ -52,10 +50,8 @@ def init(repository_path: Path, name: str | None):
     click.echo('Successfully initialized repository!')
 
 
-@click.command()
-@click.argument('query', type=str)
 def search(query: str):
-    # TODO: Suggested Workflow
+    # Suggested Workflow
     # Users get suggestions based on the relevance score provided by CrossRef
     # They are also provided with the option to open a pager (like GNU less) and scroll through more data generated on the fly
     # If nothing is to their liking, we can proceed searching for preprints in arXiv or in Google Scholar
@@ -63,22 +59,35 @@ def search(query: str):
 
     progress_bar.start()
 
-    # approach of defining the cutoff value
+    # approach of defining the cutoff value for CrossRef relevance scores
     search_prefix = []
     prefix_score_ratios = []
     prefix_max = -1
     previous_score = 0
 
-    # too slow for now, because `crossrefapi` has made the decision for the user
-    # n_search_results = crossref.search_results_length(query)
-    # if n_search_results > 10_000:  # arbitrary number, should be tweaked afterwards
-    #     # TODO: Inquirer Confirm
-    #     click.echo(f'There are more than {n_search_results:,} search results. Do you want to make your query more specific?')
-
     progress_bar.update('Searching the CrossRef database...')
 
-    desired_paper = None
-    search_results = iter(crossref.search(query))
+    n_search_results, search_results = crossref.search(query)
+
+    if n_search_results > 10_000:  # noqa: PLR2004 - arbitrary number, should be tweaked afterwards
+        progress_bar.stop()
+
+        refine_query = questionary.confirm(
+            f'There are more than {n_search_results:,} search results. Do you want to make your query more specific?').ask()
+        if refine_query:
+            return
+
+        progress_bar.start()
+
+    progress_bar.update('Searching through the arXiv preprints...')
+
+    arxiv_ids = arxiv.extract_arxiv_ids(query)
+    arxiv_results = arxiv.search(query)
+    if arxiv_ids:
+        search_prefix += list(map(str, arxiv_results))
+    arxiv_results = iter(arxiv_results)
+    first_arxiv_result = str(next(arxiv_results, ''))
+
     for search_result in search_results:
         search_prefix.append(str(search_result))
 
@@ -88,20 +97,43 @@ def search(query: str):
             progress_bar.stop()
 
             best_score_ratio = prefix_score_ratios.index(max(prefix_score_ratios[1:]))
-            search_prefix.insert(best_score_ratio + 2, questionary.Separator())
+            insert_point = best_score_ratio + 2
+            search_prefix.insert(insert_point, questionary.Separator())
+            search_prefix[insert_point:insert_point] = [first_arxiv_result] + [str(next(arxiv_results, '')) for _ in range(4)]
+            search_prefix = list(filter(lambda result: result, search_prefix))
 
-            # noinspection PyTypeChecker
-            # signature changes at a runtime
-            desired_paper = questionary.select(message='Choose the suitable paper to add it to your library',
-                                               choices=(search_prefix, search_results),
-                                               pointer='\u276f').ask()
             break
 
-    print(desired_paper)
+    search_results = random_chain(search_results, arxiv_results, weights=[0.4, 0.6])
+
+    # noinspection PyTypeChecker
+    # signature changes at a runtime, see `ui.IterativeInquirerControl`
+    desired_paper = questionary.select(message='Choose the suitable paper to add it to your library',
+                                       choices=(search_prefix, search_results),
+                                       pointer='\u276f').ask()
+
+    if desired_paper is not None:
+        desired_doi = crossref.extract_dois(desired_paper)
+        click.echo(desired_doi)
+
+        # TODO: download(desired_doi)
 
 
-main.add_command(init)
-main.add_command(search)
+@click.command('init')
+@click.argument('repository_path', type=click.Path(file_okay=False, path_type=Path))
+@click.option('--name', type=str, help='Name of the repository. Defaults to the name of the folder')
+def init_command(repository_path: Path, name: str | None):
+    init(repository_path, name)
+
+
+@click.command('search')
+@click.argument('query', type=str)
+def search_command(query: str):
+    search(query)
+
+
+main.add_command(init_command)
+main.add_command(search_command)
 
 if __name__ == '__main__':
     main()

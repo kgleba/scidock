@@ -4,3 +4,4 @@ scidock-nlp
 scidock-nlp/*
 search_engines/__pycache__/*
 profiling/*
+.ruff_cache/*

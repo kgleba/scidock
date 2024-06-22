@@ -7,15 +7,17 @@ from rich.status import Status
 
 __all__ = ('progress_bar',)
 
+type ChoiceSequence = Sequence[str | Choice | dict[str, Any]]
+
 
 class IterativeInquirerControl(InquirerControl):
-    WINDOW_SIZE = 10
-
-    def __init__(self, choices: Sequence[str | Choice | dict[str, Any]] | Iterator | tuple[Iterable, Iterator], *args, **kwargs):
+    def __init__(self, choices: ChoiceSequence | Iterator | tuple[Iterable, Iterator], *args, **kwargs):
         choice_prefix = []
 
         if len(choices) == 2 and isinstance(choices[0], Iterable) and isinstance(choices[1], Iterator):  # noqa: PLR2004
             choice_prefix, choices = choices
+
+        self.WINDOW_SIZE = (len(choice_prefix) // 10 + 1) * 10
 
         if isinstance(choices, Iterator):
             initial_choices = choice_prefix + [str(next(choices)) for _ in range(self.WINDOW_SIZE - len(choice_prefix))]

@@ -23,7 +23,10 @@ def _retrieve_remote_data(query: str, operation: str) -> Any:
     # updates relevant info about the `query` itself and `clear_query(query)`
     if remote_data.get(query) is None:
         progress_bar.update('Parsing your query using AI...')
-        remote_data.update(requests.post(f'{NLP_SERVER}/complex_analysis', json={'query': query}, timeout=30).json())
+
+        response = requests.post(f'{NLP_SERVER}/complex_analysis', json={'query': query}, timeout=30)
+        remote_data.update(response.json())
+
         progress_bar.revert_status()
 
     return remote_data[query].get(operation)
@@ -36,7 +39,7 @@ def extract_dois(query: str) -> list[str]:
 
 @cache
 def extract_arxiv_ids(query: str) -> list[str]:
-    return re.findall(ARXIV_PATTERN, query)
+    return [''.join(match) for match in re.findall(ARXIV_PATTERN, query)]
 
 
 def extract_names(query: str) -> list[str] | None:
@@ -51,10 +54,15 @@ def simplify_query(query: str) -> str | None:
     return _retrieve_remote_data(clear_query(query), 'remove_stop_words')
 
 
+@cache
 def clear_query(query: str) -> str:
     dois = extract_dois(query)
     for doi in dois:
         query = re.sub(f' *{doi} *', ' ', query)
+
+    arxiv_ids = extract_arxiv_ids(query)
+    for arxiv_id in arxiv_ids:
+        query = re.sub(f' *{arxiv_id} *', ' ', query)
 
     names = extract_names(query)
     if names is not None:
