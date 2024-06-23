@@ -25,7 +25,7 @@ def download(doi: str, proxies: dict[str, str] | None = None) -> bool:
         except requests.exceptions.Timeout:
             continue
     else:
-        print('Unfortunately, all of the Sci-Hub mirrors are unavailable at your location. Try using proxy')
+        print('Unfortunately, all of the Sci-Hub mirrors are unavailable at your location. Try using a proxy')
         return False
 
     soup = BeautifulSoup(preview_page.text, 'html.parser')
@@ -35,7 +35,8 @@ def download(doi: str, proxies: dict[str, str] | None = None) -> bool:
         return False
 
     redirect_code = download_button['onclick']
-    download_link = 'https:' + redirect_code.removeprefix("location.href='").removesuffix("'")
+    redirect_location = redirect_code.removeprefix("location.href='").removesuffix("'")
+    download_link = ('https:' if redirect_location.startswith('//') else mirror) + redirect_location
 
     citation_title = soup.find('div', id='citation').findChild('i').text
     remove_punctuation = str.maketrans('', '', string.punctuation)

@@ -69,7 +69,7 @@ def init(repository_path: Path, name: str | None):
     dump_json({}, scidock_repo_root / 'config.json')
     dump_json(current_config, scidock_root / 'repositories.json')
 
-    click.echo('Successfully initialized repository!')
+    click.echo('Successfully initialized the repository!')
 
 
 def download(query: str, proxies: dict[str, str] | None = None):
@@ -89,13 +89,19 @@ def download(query: str, proxies: dict[str, str] | None = None):
         click.echo('Successfully downloaded the paper!')
         return
 
+    click.echo('A downloadable version of this work could not be found :(')
 
-def search(query: str):
+
+def search(query: str, proxy: bool):
     # Suggested Workflow
     # Users get suggestions based on the relevance score provided by CrossRef
     # They are also provided with the option to open a pager (like GNU less) and scroll through more data generated on the fly
     # If nothing is to their liking, we can proceed searching for preprints in arXiv or in Google Scholar
     # The final goal of the search process is to retrieve the DOI, then one can proceed to the download stage
+
+    proxies = {}
+    if proxy:
+        proxies = get_current_proxy_setting()
 
     progress_bar.start()
 
@@ -153,7 +159,7 @@ def search(query: str):
     try:
         # noinspection PyTypeChecker
         # signature changes at a runtime, see `ui.IterativeInquirerControl`
-        desired_paper = questionary.select(message='Choose the suitable paper to add it to your library',
+        desired_paper = questionary.select(message='Choose the suitable paper to add to your library',
                                            choices=(search_prefix, search_results),
                                            pointer='\u276f').ask()
     except ValueError as e:
@@ -162,7 +168,7 @@ def search(query: str):
         return
 
     if desired_paper is not None:
-        download(desired_paper)
+        download(desired_paper, proxies)
 
 
 @click.command('init')
@@ -174,17 +180,16 @@ def init_command(repository_path: Path, name: str | None):
 
 @click.command('search')
 @click.argument('query', type=str)
-@click.option('--proxy', is_flag=True, default=False, help='Whether to use proxy in subsequent download requests')
-def search_command(query: str):
-    search(query)
+@click.option('--proxy', is_flag=True, default=False, help='Whether to use a proxy in subsequent download requests')
+def search_command(query: str, proxy: bool):
+    search(query, proxy)
 
 
 @click.command('download')
 @click.argument('DOI', type=str)
-@click.option('--proxy', is_flag=True, default=False, help='Whether to use proxy in download requests')
+@click.option('--proxy', is_flag=True, default=False, help='Whether to use a proxy in download requests')
 def download_command(doi: str, proxy: bool):
     proxies = {}
-
     if proxy:
         proxies = get_current_proxy_setting()
 
