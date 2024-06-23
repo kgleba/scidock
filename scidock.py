@@ -1,17 +1,38 @@
+from ipaddress import IPv4Address, IPv6Address
 from pathlib import Path
 
 import click
 import questionary
+from click_params import IP_ADDRESS
 
 from search_engines import arxiv_engine as arxiv
 from search_engines import crossref_engine as crossref
+from search_engines import scihub_engine as scihub
 from ui import progress_bar
-from utils import dump_json, load_json, random_chain, remove_outdated_repos
+from utils import dump_json, get_current_proxy_setting, load_json, random_chain, remove_outdated_repos
 
 
 @click.group()
 def main():
     pass
+
+
+@click.group()
+def config():
+    pass
+
+
+# TODO: create `scidock test proxy`
+
+@config.command('proxy')
+@click.argument('proxy_type', type=click.Choice(['http', 'socks5'], case_sensitive=False))
+@click.argument('ip', type=IP_ADDRESS)
+@click.argument('port', type=int)
+def proxy_configuration(proxy_type: str, ip: IPv4Address | IPv6Address, port: int):
+    scidock_root = Path('~/.scidock').expanduser()
+    current_config = load_json(scidock_root / 'config.json')
+    current_config['proxy'] = {'type': proxy_type, 'ip': str(ip), 'port': port}
+    dump_json(current_config, scidock_root / 'config.json')
 
 
 def init(repository_path: Path, name: str | None):
@@ -24,30 +45,49 @@ def init(repository_path: Path, name: str | None):
     scidock_repo_root.mkdir(parents=True)
     scidock_root.mkdir(exist_ok=True)
 
-    current_repositories = load_json(scidock_root / 'repositories.json')
+    current_config = load_json(scidock_root / 'config.json')
 
-    if current_repositories.get('repositories') is None:
-        current_repositories['repositories'] = {}
+    if current_config.get('repositories') is None:
+        current_config['repositories'] = {}
 
-    current_repositories['repositories'] = remove_outdated_repos(current_repositories['repositories'])
+    current_config['repositories'] = remove_outdated_repos(current_config['repositories'])
 
     if name is not None:
         new_repository_name = name
     else:
         parts_included = 1
         new_repository_name = repository_path.absolute().parts[-1]
-        while new_repository_name in current_repositories['repositories']:
+        while new_repository_name in current_config['repositories']:
             parts_included += 1
             new_repository_name = '/'.join(repository_path.parts[-parts_included:])
 
     new_repository_repr = {new_repository_name: {'path': str(repository_path.absolute())}}
-    current_repositories['repositories'].update(new_repository_repr)
-    current_repositories['default'] = new_repository_name
+    current_config['repositories'].update(new_repository_repr)
+    current_config['default'] = new_repository_name
+    current_config['proxy'] = {}
 
-    dump_json({}, scidock_repo_root / 'content.json')
-    dump_json(current_repositories, scidock_root / 'repositories.json')
+    dump_json({}, scidock_repo_root / 'config.json')
+    dump_json(current_config, scidock_root / 'repositories.json')
 
     click.echo('Successfully initialized repository!')
+
+
+def download(query: str, proxies: dict[str, str] | None = None):
+    query_dois = crossref.extract_dois(query)
+    if len(query_dois) != 1:
+        raise ValueError('Target DOI is either not specified or ambiguous')
+
+    target_doi = query_dois[0]
+
+    target_arxiv_ids = arxiv.extract_arxiv_ids_strictly(target_doi)
+    if target_arxiv_ids:
+        arxiv.download(target_arxiv_ids[0])
+        click.echo('Successfully downloaded the paper!')
+        return
+
+    if scihub.download(target_doi, proxies):
+        click.echo('Successfully downloaded the paper!')
+        return
 
 
 def search(query: str):
@@ -67,7 +107,11 @@ def search(query: str):
 
     progress_bar.update('Searching the CrossRef database...')
 
-    n_search_results, search_results = crossref.search(query)
+    n_search_results, search_results = 0, []
+
+    raw_search_result = crossref.search(query)
+    if raw_search_result is not None:
+        n_search_results, search_results = raw_search_result
 
     if n_search_results > 10_000:  # noqa: PLR2004 - arbitrary number, should be tweaked afterwards
         progress_bar.stop()
@@ -106,17 +150,19 @@ def search(query: str):
 
     search_results = random_chain(search_results, arxiv_results, weights=[0.4, 0.6])
 
-    # noinspection PyTypeChecker
-    # signature changes at a runtime, see `ui.IterativeInquirerControl`
-    desired_paper = questionary.select(message='Choose the suitable paper to add it to your library',
-                                       choices=(search_prefix, search_results),
-                                       pointer='\u276f').ask()
+    try:
+        # noinspection PyTypeChecker
+        # signature changes at a runtime, see `ui.IterativeInquirerControl`
+        desired_paper = questionary.select(message='Choose the suitable paper to add it to your library',
+                                           choices=(search_prefix, search_results),
+                                           pointer='\u276f').ask()
+    except ValueError as e:
+        if str(e) == 'No choices provided':
+            click.echo('Nothing found! :(')
+        return
 
     if desired_paper is not None:
-        desired_doi = crossref.extract_dois(desired_paper)
-        click.echo(desired_doi)
-
-        # TODO: download(desired_doi)
+        download(desired_paper)
 
 
 @click.command('init')
@@ -128,12 +174,30 @@ def init_command(repository_path: Path, name: str | None):
 
 @click.command('search')
 @click.argument('query', type=str)
+@click.option('--proxy', is_flag=True, default=False, help='Whether to use proxy in subsequent download requests')
 def search_command(query: str):
     search(query)
 
 
+@click.command('download')
+@click.argument('DOI', type=str)
+@click.option('--proxy', is_flag=True, default=False, help='Whether to use proxy in download requests')
+def download_command(doi: str, proxy: bool):
+    proxies = {}
+
+    if proxy:
+        proxies = get_current_proxy_setting()
+
+    try:
+        download(doi, proxies)
+    except ValueError as e:
+        raise click.BadParameter(str(e)) from e
+
+
 main.add_command(init_command)
 main.add_command(search_command)
+main.add_command(download_command)
+main.add_command(config)
 
 if __name__ == '__main__':
     main()

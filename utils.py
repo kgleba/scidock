@@ -1,6 +1,7 @@
 import json
 import random
 from functools import cache
+from ipaddress import IPv4Address, IPv6Address
 from os import PathLike
 from pathlib import Path
 from typing import Any
@@ -20,10 +21,14 @@ def dump_json(data: Any, filename: str | PathLike) -> None:
         json.dump(data, file, ensure_ascii=False)
 
 
-def get_default_repository() -> str | None:
+def get_default_repository_path() -> str | None:
     scidock_root = Path('~/.scidock').expanduser()
-    repositories = load_json(scidock_root / 'repositories.json')
-    return repositories.get('default')
+    repositories = load_json(scidock_root / 'config.json')
+
+    if repositories.get('default') is not None:
+        return repositories['repositories'][repositories['default']]['path']
+
+    return None
 
 
 def remove_outdated_repos(repositories: dict) -> dict:
@@ -71,3 +76,16 @@ def responsive_cache(func):
         return func_return
 
     return notification_wrapper
+
+
+def format_requests_proxy(proxy_type: str, ip: IPv4Address | IPv6Address, port: int):
+    connection_string = f'{proxy_type}://{ip}:{port}'
+    return {'http': connection_string, 'https': connection_string}
+
+
+def get_current_proxy_setting():
+    scidock_root = Path('~/.scidock').expanduser()
+    current_config = load_json(scidock_root / 'config.json')
+    return format_requests_proxy(*current_config['proxy'].values())
+
+# TODO: consider creating context managers for working with different config files

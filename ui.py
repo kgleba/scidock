@@ -20,7 +20,12 @@ class IterativeInquirerControl(InquirerControl):
         self.WINDOW_SIZE = (len(choice_prefix) // 10 + 1) * 10
 
         if isinstance(choices, Iterator):
-            initial_choices = choice_prefix + [str(next(choices)) for _ in range(self.WINDOW_SIZE - len(choice_prefix))]
+            initial_choices = choice_prefix + [str(next(choices, '')) for _ in range(self.WINDOW_SIZE - len(choice_prefix))]
+            initial_choices = list(filter(lambda choice: choice, initial_choices))
+
+            if not initial_choices:
+                raise ValueError('No choices provided')
+
             self.continuation_stream = choices
         else:
             initial_choices = choices

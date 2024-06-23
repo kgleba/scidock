@@ -15,6 +15,7 @@ DOI_PATTERN = re.compile(r'10.\d{4,9}/[-._;()/:a-zA-Z0-9]+')
 
 # source: https://info.arxiv.org/help/arxiv_identifier_for_services.html
 ARXIV_PATTERN = re.compile(r'(\d{4}.\d{4,5}|[a-z\-]+(\.[A-Z]{2})?/\d{7})(v\d+)?')
+STRICT_ARXIV_PATTERN = re.compile(fr'arXiv\.{ARXIV_PATTERN.pattern}')
 
 remote_data = {}
 
@@ -40,6 +41,11 @@ def extract_dois(query: str) -> list[str]:
 @cache
 def extract_arxiv_ids(query: str) -> list[str]:
     return [''.join(match) for match in re.findall(ARXIV_PATTERN, query)]
+
+
+@cache
+def extract_arxiv_ids_strictly(query: str) -> list[str]:
+    return [''.join(match) for match in re.findall(STRICT_ARXIV_PATTERN, query)]
 
 
 def extract_names(query: str) -> list[str] | None:
