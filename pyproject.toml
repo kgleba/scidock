@@ -8,7 +8,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.12"
 click = "^8.1.7"
-requests = { version = "^2.32.0", extras = ["socks"] }
+requests = { version = "^2.32.3", extras = ["socks"] }
 crossrefapi = "^1.6.0"
 arxiv = { git = "https://github.com/lukasschwab/arxiv.py.git" }
 rich = "^13.7.1"
