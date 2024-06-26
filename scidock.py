@@ -1,15 +1,21 @@
+import platform
+import subprocess
 from ipaddress import IPv4Address, IPv6Address
 from pathlib import Path
 
 import click
 import questionary
 from click_params import IP_ADDRESS
+from rapidfuzz import fuzz, process
+from rapidfuzz.utils import default_process
 
 from search_engines import arxiv_engine as arxiv
 from search_engines import crossref_engine as crossref
 from search_engines import scihub_engine as scihub
 from ui import progress_bar
-from utils import dump_json, get_current_proxy_setting, load_json, random_chain, remove_outdated_repos
+from utils import dump_json, get_current_proxy_setting, get_default_repository_path, load_json, random_chain, remove_outdated_repos
+
+FUZZY_MATCH_RATE = 60
 
 
 @click.group()
@@ -66,8 +72,8 @@ def init(repository_path: Path, name: str | None):
     current_config['default'] = new_repository_name
     current_config['proxy'] = {}
 
-    dump_json({}, scidock_repo_root / 'config.json')
-    dump_json(current_config, scidock_root / 'repositories.json')
+    dump_json({}, scidock_repo_root / 'content.json')
+    dump_json(current_config, scidock_root / 'config.json')
 
     click.echo('Successfully initialized the repository!')
 
@@ -75,7 +81,7 @@ def init(repository_path: Path, name: str | None):
 def download(query: str, proxies: dict[str, str] | None = None):
     query_dois = crossref.extract_dois(query)
     if len(query_dois) != 1:
-        raise ValueError('Target DOI is either not specified or ambiguous')
+        raise click.BadParameter('Target DOI is either not specified or ambiguous')
 
     target_doi = query_dois[0]
 
@@ -113,11 +119,7 @@ def search(query: str, proxy: bool):
 
     progress_bar.update('Searching the CrossRef database...')
 
-    n_search_results, search_results = 0, []
-
-    raw_search_result = crossref.search(query)
-    if raw_search_result is not None:
-        n_search_results, search_results = raw_search_result
+    n_search_results, search_results = crossref.search(query)
 
     if n_search_results > 10_000:  # noqa: PLR2004 - arbitrary number, should be tweaked afterwards
         progress_bar.stop()
@@ -137,6 +139,8 @@ def search(query: str, proxy: bool):
         search_prefix += list(map(str, arxiv_results))
     arxiv_results = iter(arxiv_results)
     first_arxiv_result = str(next(arxiv_results, ''))
+
+    # TODO: prefer downloadable options of the same paper
 
     for search_result in search_results:
         search_prefix.append(str(search_result))
@@ -171,6 +175,42 @@ def search(query: str, proxy: bool):
         download(desired_paper, proxies)
 
 
+def open_pdf(query: str):
+    repository_path = get_default_repository_path()
+    repository_content = load_json(f'{repository_path}/.scidock/content.json')
+
+    filenames = list(repository_content.keys())
+    metadata = [' '.join(entry.values()) for entry in repository_content.values()]
+
+    # noinspection PyTypeChecker
+    # authors of the `rapidfuzz` library incorrectly specified the signature of the function
+    best_match = process.extractOne(query, metadata, scorer=fuzz.partial_token_ratio, score_cutoff=FUZZY_MATCH_RATE,
+                                    processor=default_process)
+    if best_match is None:
+        click.echo('Did not find any relevant papers :(')
+        return
+
+    best_match_filename = filenames[best_match[2]]
+    best_match_path = f'"{repository_path}/{best_match_filename}"'
+
+    # TODO: log relevance score
+    # TODO: verify PDF header (to exclude the possibility of arbitrary code execution)
+    # TODO: implement resolving full binary paths
+
+    match platform.system():
+        case 'Windows':
+            subprocess.run(['powershell', '-Command', 'Invoke-Item', best_match_path], check=False)  # noqa: S603, S607 - see TODOs above
+        case 'Linux':
+            subprocess.run(['xdg-open', best_match_path], check=False)  # noqa: S603, S607 - see TODOs above
+        case 'Darwin':
+            subprocess.run(['open', best_match_path], check=False)  # noqa: S603, S607 - see TODOs above
+        case _:
+            click.echo('Operating system not recognized!')
+            return
+
+    click.echo('Successfully opened the file!')
+
+
 @click.command('init')
 @click.argument('repository_path', type=click.Path(file_okay=False, path_type=Path))
 @click.option('--name', type=str, help='Name of the repository. Defaults to the name of the folder')
@@ -193,15 +233,20 @@ def download_command(doi: str, proxy: bool):
     if proxy:
         proxies = get_current_proxy_setting()
 
-    try:
-        download(doi, proxies)
-    except ValueError as e:
-        raise click.BadParameter(str(e)) from e
+    download(doi, proxies)
+
+
+@click.command('open')
+@click.argument('query', type=str)
+def open_command(query: str):
+    open_pdf(query)
 
 
 main.add_command(init_command)
 main.add_command(search_command)
 main.add_command(download_command)
+main.add_command(open_command)
+
 main.add_command(config)
 
 if __name__ == '__main__':

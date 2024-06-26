@@ -55,7 +55,13 @@ poetry run scidock config proxy socks5 127.0.0.1 1080
 
 You can now force other commands (like `search` and `download`) to make the appropriate network requests through the proxy by passing the `--proxy` flag
 
-Planning to introduce **new features** soon: the ability to `open` locally stored PDFs in your standard viewer on free-form request; and to `cite` any of the papers stored in the local database.
+To `open` locally stored PDFs in your standard viewer, run with free-form request:
+
+```shell
+poetry run scidock open 'query'
+```
+
+Planning to introduce **new features** soon: e.g. to `cite` any of the papers stored in the local database.
 
 Aesthetically pleasing demos will also appear here soon :D
 
@@ -76,5 +82,5 @@ Aesthetically pleasing demos will also appear here soon :D
 ## Limitations
 
 - Proxies do not support authentication
-- Performance still isn't fascinating
+- Performance still requires attention
 - Some parts of the system are still poorly configurable or not configurable at all

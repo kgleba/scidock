@@ -48,10 +48,10 @@ def _prepare_query_args(query: str) -> tuple[list[str], dict[str, str]]:
     return keywords, search_params
 
 
-def search(query: str) -> tuple[int, Iterator[CrossRefItem]] | None:
+def search(query: str) -> tuple[int, Iterator[CrossRefItem]]:
     plain_query = simplify_query(query)
     if not plain_query.strip():
-        return None
+        return 0, iter([])
 
     keywords, search_params = _prepare_query_args(query)
     search_query = _perform_query(*keywords, **search_params)
