@@ -2,6 +2,7 @@ import platform
 import subprocess
 from ipaddress import IPv4Address, IPv6Address
 from pathlib import Path
+from pprint import pformat
 
 import click
 import questionary
@@ -9,6 +10,7 @@ from click_params import IP_ADDRESS
 from rapidfuzz import fuzz, process
 from rapidfuzz.utils import default_process
 
+from config import logger
 from search_engines import arxiv_engine as arxiv
 from search_engines import crossref_engine as crossref
 from search_engines import scihub_engine as scihub
@@ -39,6 +41,8 @@ def proxy_configuration(proxy_type: str, ip: IPv4Address | IPv6Address, port: in
     current_config = load_json(scidock_root / 'config.json')
     current_config['proxy'] = {'type': proxy_type, 'ip': str(ip), 'port': port}
     dump_json(current_config, scidock_root / 'config.json')
+
+    click.echo('Successfully configured proxy!')
 
 
 def init(repository_path: Path, name: str | None):
@@ -75,10 +79,13 @@ def init(repository_path: Path, name: str | None):
     dump_json({}, scidock_repo_root / 'content.json')
     dump_json(current_config, scidock_root / 'config.json')
 
+    logger.info(f'Initialized repository with the following setup: {pformat(current_config)}')
     click.echo('Successfully initialized the repository!')
 
 
 def download(query: str, proxies: dict[str, str] | None = None):
+    logger.info(f'Received download request with {query = }')
+
     query_dois = crossref.extract_dois(query)
     if len(query_dois) != 1:
         raise click.BadParameter('Target DOI is either not specified or ambiguous')
@@ -193,7 +200,8 @@ def open_pdf(query: str):
     best_match_filename = filenames[best_match[2]]
     best_match_path = f'"{repository_path}/{best_match_filename}"'
 
-    # TODO: log relevance score
+    logger.info(f'Best Match Relevance Score: {best_match[1]}')
+
     # TODO: verify PDF header (to exclude the possibility of arbitrary code execution)
     # TODO: implement resolving full binary paths
 
@@ -205,7 +213,7 @@ def open_pdf(query: str):
         case 'Darwin':
             subprocess.run(['open', best_match_path], check=False)  # noqa: S603, S607 - see TODOs above
         case _:
-            click.echo('Operating system not recognized!')
+            logger.error(f'Operating system "{platform.system()}" not recognized!')
             return
 
     click.echo('Successfully opened the file!')

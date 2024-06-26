@@ -3,6 +3,7 @@ from dataclasses import asdict, dataclass
 
 import arxiv
 
+from config import logger
 from utils import dump_json, get_default_repository_path, load_json
 from .metadata import Metadata
 from .query_parser import clear_query, extract_arxiv_ids, extract_arxiv_ids_strictly, extract_names
@@ -27,6 +28,7 @@ class ArXivItem:
 
 def search(query: str) -> Iterator[ArXivItem]:
     arxiv_ids = extract_arxiv_ids(query)
+    logger.info(f'Extracted arXiv IDs: {arxiv_ids!r}')
 
     if arxiv_ids:
         search_request = arxiv.Search(id_list=arxiv_ids)
@@ -38,6 +40,7 @@ def search(query: str) -> Iterator[ArXivItem]:
     search_query = ''
 
     names = extract_names(query)
+    logger.info(f'Extracted names: {names!r}')
     if names is not None:
         search_query += 'au:' + ' AND '.join(names)
 
@@ -57,6 +60,7 @@ def download(arxiv_id: str):
     repository_path = get_default_repository_path()
     # noinspection PyProtectedMember
     filename = paper._get_default_filename()
+    logger.info(f'Attempting to download a file with {filename = } for {arxiv_id = }')
 
     paper.download_pdf(dirpath=repository_path)
 

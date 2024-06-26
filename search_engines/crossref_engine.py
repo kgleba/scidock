@@ -1,12 +1,14 @@
-from collections.abc import Iterator
+from collections.abc import Iterator  # noqa: I001 - local imports are grouped together
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from functools import cache
+from pprint import pformat
 
 import crossref.restful
 import requests
 from crossref.restful import Etiquette, Works
 
+from config import logger
+from utils import responsive_cache
 from .query_parser import clear_query, extract_dois, extract_keywords, extract_names, simplify_query
 
 crossref.restful.requests = requests.Session()
@@ -27,21 +29,23 @@ class CrossRefItem:
         return f'{self.title.rstrip('.')}. DOI: {self.DOI}'
 
 
-@cache
+@responsive_cache
 def _perform_query(*args, **kwargs) -> Works:
     return engine.query(*args, **kwargs)
 
 
-@cache
+@responsive_cache
 def _prepare_query_args(query: str) -> tuple[list[str], dict[str, str]]:
     search_params = {}
 
     names = extract_names(query)
+    logger.info(f'Extracted names: {names!r}')
     if names is not None:
         search_params['author'] = ' '.join(names)
 
     query = clear_query(query)
     keywords = extract_keywords(query)
+    logger.info(f'Extracted keywords: {keywords!r}')
     if not keywords:
         keywords = [query]
 
@@ -57,6 +61,7 @@ def search(query: str) -> tuple[int, Iterator[CrossRefItem]]:
     search_query = _perform_query(*keywords, **search_params)
     search_iter = iter(search_query)
 
+    logger.info('Launching concurrent requests')
     with ThreadPoolExecutor() as pool:
         count_future = pool.submit(search_query.count)
         search_future = pool.submit(next, search_iter)
@@ -68,11 +73,28 @@ def search(query: str) -> tuple[int, Iterator[CrossRefItem]]:
         dois = extract_dois(query)
         for doi in dois:
             paper = engine.doi(doi)
-            yield CrossRefItem(' / '.join(paper['title']), paper['DOI'])
 
-        yield CrossRefItem(' / '.join(first_search_result['title']), first_search_result['DOI'], first_search_result['score'])
+            if 'xmlns' in ''.join(paper.get('title', ())):
+                logger.warning(
+                    'CrossRef responses might have MathML in metadata elements (such as title), which might lead to the parsing errors. '
+                    'See: https://www.crossref.org/documentation/schema-library/markup-guide-metadata-segments/mathml. '
+                    'I\'m aware of the issue and working on transforming it into the printable math format.')
+
+            yield CrossRefItem(' / '.join(paper.get('title', ('UNTITLED',))), paper['DOI'])
+
+        yield CrossRefItem(' / '.join(first_search_result.get('title', ('UNTITLED',))), first_search_result['DOI'],
+                           first_search_result['score'])
 
         for paper in search_iter:
-            yield CrossRefItem(' / '.join(paper['title']), paper['DOI'], paper['score'])
+            if None in (paper.get('title'), paper.get('DOI'), paper.get('score')):
+                logger.warning(f'Received the paper with an unusual metadata: {pformat(paper)}')
+
+            if 'xmlns' in ''.join(paper.get('title', ())):
+                logger.warning(
+                    'CrossRef responses might have MathML in metadata elements (such as title), which might lead to the parsing errors. '
+                    'See: https://www.crossref.org/documentation/schema-library/markup-guide-metadata-segments/mathml. '
+                    'I\'m aware of the issue and working on transforming it into the printable math format.')
+
+            yield CrossRefItem(' / '.join(paper.get('title', ('UNTITLED',))), paper['DOI'], paper['score'])
 
     return n_search_results, next(iter(retrieve_papers, None))

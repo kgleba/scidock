@@ -1,10 +1,10 @@
 import re
-from functools import cache
 from typing import Any
 
 import requests
 
 from ui import progress_bar
+from utils import responsive_cache
 
 __all__ = ('extract_dois', 'extract_arxiv_ids', 'extract_names', 'extract_keywords', 'simplify_query', 'clear_query')
 
@@ -25,7 +25,7 @@ def _retrieve_remote_data(query: str, operation: str) -> Any:
     if remote_data.get(query) is None:
         progress_bar.update('Parsing your query using AI...')
 
-        response = requests.post(f'{NLP_SERVER}/complex_analysis', json={'query': query}, timeout=30)
+        response = requests.post(f'{NLP_SERVER}/complex_analysis', json={'query': query}, timeout=10)
         remote_data.update(response.json())
 
         progress_bar.revert_status()
@@ -33,17 +33,17 @@ def _retrieve_remote_data(query: str, operation: str) -> Any:
     return remote_data[query].get(operation)
 
 
-@cache
+@responsive_cache
 def extract_dois(query: str) -> list[str]:
     return re.findall(DOI_PATTERN, query)
 
 
-@cache
+@responsive_cache
 def extract_arxiv_ids(query: str) -> list[str]:
     return [''.join(match) for match in re.findall(ARXIV_PATTERN, query)]
 
 
-@cache
+@responsive_cache
 def extract_arxiv_ids_strictly(query: str) -> list[str]:
     return [''.join(match) for match in re.findall(STRICT_ARXIV_PATTERN, query)]
 
@@ -60,7 +60,7 @@ def simplify_query(query: str) -> str | None:
     return _retrieve_remote_data(clear_query(query), 'remove_stop_words')
 
 
-@cache
+@responsive_cache
 def clear_query(query: str) -> str:
     dois = extract_dois(query)
     for doi in dois:
