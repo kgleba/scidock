@@ -10,14 +10,14 @@ from click_params import IP_ADDRESS
 from rapidfuzz import fuzz, process
 from rapidfuzz.utils import default_process
 
-from config import logger
-from search_engines import arxiv_engine as arxiv
-from search_engines import crossref_engine as crossref
-from search_engines import scihub_engine as scihub
-from ui import progress_bar
-from utils import dump_json, get_current_proxy_setting, get_default_repository_path, load_json, random_chain, remove_outdated_repos
+from scidock.config import logger
+from scidock.search_engines import arxiv_engine as arxiv
+from scidock.search_engines import crossref_engine as crossref
+from scidock.search_engines import scihub_engine as scihub
+from scidock.ui import progress_bar
+from scidock.utils import dump_json, get_current_proxy_setting, get_default_repository_path, load_json, random_chain, remove_outdated_repos
 
-FUZZY_MATCH_RATE = 60
+FUZZY_MATCH_RATE = 75
 
 
 @click.group()

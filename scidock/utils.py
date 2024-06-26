@@ -6,7 +6,7 @@ from os import PathLike
 from pathlib import Path
 from typing import Any
 
-from config import logger
+from scidock.config import logger
 
 
 def load_json(filename: str | PathLike) -> Any:

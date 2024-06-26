@@ -1,12 +1,12 @@
-import string  # noqa: I001 - local imports are grouped together
+import string
 from dataclasses import asdict
 
 import requests
 from bs4 import BeautifulSoup
 
-from utils import dump_json, get_default_repository_path, load_json
-from .metadata import Metadata
-from config import logger
+from scidock.config import logger
+from scidock.search_engines.metadata import Metadata
+from scidock.utils import dump_json, get_default_repository_path, load_json
 
 # TODO: make mirrors dynamic or more configurable
 SCIHUB_MIRRORS = ['https://sci-hub.ru', 'https://sci-hub.se', 'https://sci-hub.st']

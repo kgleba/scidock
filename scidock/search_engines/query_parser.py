@@ -3,8 +3,8 @@ from typing import Any
 
 import requests
 
-from ui import progress_bar
-from utils import responsive_cache
+from scidock.ui import progress_bar
+from scidock.utils import responsive_cache
 
 __all__ = ('extract_dois', 'extract_arxiv_ids', 'extract_names', 'extract_keywords', 'simplify_query', 'clear_query')
 

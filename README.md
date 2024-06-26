@@ -4,6 +4,13 @@
 
 Soon this project will be published on [PyPI](https://pypi.org/), and `pip` will become the preferred installation method.
 
+For now, install it manually:
+
+```shell
+git clone https://github.com/kgleba/scidock.git
+pip install .
+```
+
 ### Development installation
 
 After installing [Poetry](https://python-poetry.org/docs/#installation) on your system, run these commands:
@@ -17,18 +24,16 @@ poetry install
 
 ## Usage
 
-Note: in the future, SciDock will become a full-fledged console application and will be called with the `scidock` command. To emulate this behavior at this stage of development, we use `poetry run`.
-
 To initialize a repository (and set it as a default), run:
 
 ```shell
-poetry run scidock init /path/to/repository
+scidock init /path/to/repository
 ```
 
 To perform a search, execute:
 
 ```shell
-poetry run scidock search 'query'
+scidock search 'query'
 ```
 
 Note that the reason we do not explicitly ask you to provide author name/title/abstract/etc. but rather provide a free-form query is that all of this work is done in the background by Natural Language Processing models.
@@ -36,13 +41,13 @@ Note that the reason we do not explicitly ask you to provide author name/title/a
 To try and download the paper with a known DOI, execute:
 
 ```shell
-poetry run scidock download 'DOI'
+scidock download 'DOI'
 ```
 
 To set up a proxy (see the ["Supported Resources"](#supported-resources) section for use cases), use `scidock config`:
 
 ```shell
-poetry run scidock config proxy PROXY_TYPE IP PORT
+scidock config proxy PROXY_TYPE IP PORT
 ```
 
 where `PROXY_TYPE` is either `http` or `socks5` (depending on the type of proxy you are using).
@@ -50,7 +55,7 @@ where `PROXY_TYPE` is either `http` or `socks5` (depending on the type of proxy 
 For example:
 
 ```shell
-poetry run scidock config proxy socks5 127.0.0.1 1080
+scidock config proxy socks5 127.0.0.1 1080
 ```
 
 You can now force other commands (like `search` and `download`) to make the appropriate network requests through the proxy by passing the `--proxy` flag
@@ -58,7 +63,7 @@ You can now force other commands (like `search` and `download`) to make the appr
 To `open` locally stored PDFs in your standard viewer, run with free-form request:
 
 ```shell
-poetry run scidock open 'query'
+scidock open 'query'
 ```
 
 Planning to introduce **new features** soon: e.g. to `cite` any of the papers stored in the local database.

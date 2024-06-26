@@ -1,6 +1,5 @@
 .idea/*
 .ruff_cache/*
-__pycache__/*
 
 scidock-nlp
 scidock-nlp/*
@@ -8,5 +7,6 @@ profiling/*
 
 logs/*
 
-search_engines/__pycache__/*
-config/__pycache__/*
+scidock/__pycache__/*
+scidock/search_engines/__pycache__/*
+scidock/config/__pycache__/*

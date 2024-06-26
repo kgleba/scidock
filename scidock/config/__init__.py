@@ -9,13 +9,15 @@ import yaml
 __all__ = ('logger',)
 
 logger = logging.getLogger('scidock')
-Path('logs').mkdir(exist_ok=True)
+Path('~/.scidock/logs').expanduser().mkdir(parents=True, exist_ok=True)
 
 
 @cache  # ensure that the function gets called only once
 def setup_logging():
-    with open('config/logging.yaml') as config_file:
+    with open(Path(__file__).parent / 'logging.yaml') as config_file:
         log_config = yaml.load(config_file, Loader=yaml.SafeLoader)
+
+    log_config['handlers']['file']['filename'] = str(Path(log_config['handlers']['file']['filename']).expanduser().absolute())
 
     logging.config.dictConfig(log_config)
     queue_handler = logging.getHandlerByName('queue_handler')

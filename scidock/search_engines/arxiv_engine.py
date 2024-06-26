@@ -1,12 +1,12 @@
-from collections.abc import Iterator  # noqa: I001 - local imports are grouped together
+from collections.abc import Iterator
 from dataclasses import asdict, dataclass
 
 import arxiv
 
-from config import logger
-from utils import dump_json, get_default_repository_path, load_json
-from .metadata import Metadata
-from .query_parser import clear_query, extract_arxiv_ids, extract_arxiv_ids_strictly, extract_names
+from scidock.config import logger
+from scidock.search_engines.metadata import Metadata
+from scidock.search_engines.query_parser import clear_query, extract_arxiv_ids, extract_arxiv_ids_strictly, extract_names
+from scidock.utils import dump_json, get_default_repository_path, load_json
 
 client = arxiv.Client()
 

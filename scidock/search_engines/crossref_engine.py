@@ -1,4 +1,4 @@
-from collections.abc import Iterator  # noqa: I001 - local imports are grouped together
+from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pprint import pformat
@@ -7,9 +7,9 @@ import crossref.restful
 import requests
 from crossref.restful import Etiquette, Works
 
-from config import logger
-from utils import responsive_cache
-from .query_parser import clear_query, extract_dois, extract_keywords, extract_names, simplify_query
+from scidock.config import logger
+from scidock.search_engines.query_parser import clear_query, extract_dois, extract_keywords, extract_names, simplify_query
+from scidock.utils import responsive_cache
 
 crossref.restful.requests = requests.Session()
 

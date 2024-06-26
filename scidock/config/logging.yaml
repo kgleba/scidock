@@ -17,7 +17,7 @@ handlers:
     class: logging.handlers.RotatingFileHandler
     level: DEBUG
     formatter: detailed
-    filename: logs/scidock.log
+    filename: ~/.scidock/logs/scidock.log
     maxBytes: 10_000_000
     backupCount: 3
   queue_handler:
