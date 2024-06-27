@@ -40,10 +40,7 @@ def is_repository_initialized() -> bool:
         return False
 
     repositories = load_json(scidock_root / 'config.json')
-    if repositories.get('default') is None:
-        return False
-
-    return True
+    return repositories.get('default') is not None
 
 
 def require_initialized_repository(func):
