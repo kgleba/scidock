@@ -102,7 +102,7 @@ def proxy_configuration(proxy_type: str, ip: IPv4Address | IPv6Address, port: in
     click.echo('Successfully configured proxy!')
 
 
-def init(repository_path: Path, name: str | None):
+def init(repository_path: Path, name: str | None = None):
     scidock_root = Path('~/.scidock').expanduser()
     scidock_repo_root = repository_path / '.scidock'
     if Path(scidock_repo_root).exists():
@@ -140,7 +140,7 @@ def init(repository_path: Path, name: str | None):
     click.echo('Successfully initialized the repository!')
 
 
-def download(query: str, proxies: dict[str, str] | None = None) -> bool:
+def download(query: str, proxies: dict[str, str] | None) -> bool:
     logger.info(f'Received download request with {query = }')
 
     query_dois = crossref.extract_dois(query)
@@ -178,7 +178,7 @@ def search(query: str, proxy: bool, extended: bool):
     progress_bar.update('Searching the CrossRef database...')
 
     n_search_results, search_results = crossref.search(query)
-    if n_search_results > 10_000:  # noqa: PLR2004 - arbitrary number, should be tweaked afterwards
+    if n_search_results > 1_000_000:  # noqa: PLR2004 - arbitrary number, should be tweaked afterwards
         progress_bar.stop()
 
         refine_query = questionary.confirm(
@@ -268,7 +268,7 @@ def open_pdf(query: str):
 
 @click.command('init')
 @click.argument('repository_path', type=click.Path(file_okay=False, path_type=Path))
-@click.option('--name', type=str, help='Name of the repository. Defaults to the name of the folder')
+@click.option('--name', type=str, default=None, help='Name of the repository. Defaults to the name of the folder')
 def init_command(repository_path: Path, name: str | None):
     init(repository_path, name)
 

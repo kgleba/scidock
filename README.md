@@ -4,11 +4,21 @@ SciDock is a CLI tool designed to provide a user-friendly interface for finding,
 
 ## Installation
 
+The most preferred installation method is via [pipx](https://pipx.pypa.io), which enhances all of the benefits of the CLI application while running in an isolated environment.
+
+```shell
+pipx install scidock
+```
+
+If you don't want to install pipx, you can just run:
+
 ```shell
 pip install scidock
 ```
 
-You must have Python 3.12+ installed!
+Note: you must have Python 3.12+ installed!
+
+If you want to install the application manually or plan to contribute to the project, consider the "development installation" option (see next section). Otherwise, skip it without a second thought.
 
 ### Development installation
 
@@ -23,13 +33,13 @@ poetry install
 
 ## Usage
 
-To initialize a repository (and set it as a default), run:
+To **initialize** a repository (and set it as a default), run:
 
 ```shell
 scidock init /path/to/repository
 ```
 
-To perform a search, execute:
+To perform a **search**, execute:
 
 ```shell
 scidock search 'query'
@@ -37,13 +47,17 @@ scidock search 'query'
 
 Note that the reason we do not explicitly ask you to provide author name/title/abstract/etc. but rather provide a free-form query is that all of this work is done in the background by Natural Language Processing models.
 
-To try and download the paper with a known DOI, execute:
+You can also use the `--extend` option to expand the search field (e.g., to search through abstracts). By default it is disabled, and search with free-form query is limited to titles.
+
+The dividing line in the search engine results deserves special attention. Behind it are the works that most closely match the query and, as we think, will be most useful to you.
+
+To try and **download** the paper with a known DOI, execute:
 
 ```shell
 scidock download 'DOI'
 ```
 
-To set up a proxy (see the ["Supported Resources"](#supported-resources) section for use cases), use `scidock config`:
+To set up a **proxy** (see the ["Supported Resources"](#supported-resources) section for use cases), use `scidock config`:
 
 ```shell
 scidock config proxy PROXY_TYPE IP PORT
@@ -59,7 +73,7 @@ scidock config proxy socks5 127.0.0.1 1080
 
 You can now force other commands (like `search` and `download`) to make the appropriate network requests through the proxy by passing the `--proxy` flag
 
-To `open` locally stored PDFs in your standard viewer, run with free-form request:
+To **open** locally stored PDFs in your standard viewer, run with free-form request:
 
 ```shell
 scidock open 'query'
@@ -88,3 +102,5 @@ Aesthetically pleasing demos will also appear here soon :D
 - Proxies do not support authentication
 - Performance still requires attention
 - Some parts of the system are still poorly configurable or not configurable at all
+
+Don't hesitate to open [issues](https://github.com/kgleba/scidock/issues) as the project is still in beta testing!

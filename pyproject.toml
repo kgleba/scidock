@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "scidock"
-version = "0.1.0"
+version = "0.1.1"
 description = "CLI interface for finding, downloading and managing scientific articles"
 authors = ["kgleba <kgleba@yandex.ru>"]
 readme = "README.md"
@@ -25,6 +25,9 @@ colorlog = "^6.8.2"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.4.9"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.2.2"
 
 [tool.poetry.scripts]
 scidock = "scidock.scidock:main"
