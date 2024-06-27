@@ -47,7 +47,11 @@ def download(doi: str, proxies: dict[str, str] | None = None) -> bool:
     redirect_location = redirect_code.removeprefix("location.href='").removesuffix("'")
     download_link = ('https:' if redirect_location.startswith('//') else mirror) + redirect_location
 
-    citation_title = soup.find('div', id='citation').findChild('i').text
+    # TODO: improve citation parsing
+    citation_container = soup.find('div', id='citation')
+    citation_italic = citation_container.findChild('i')
+    citation_title = citation_italic.text if citation_italic is not None else citation_container.text
+
     remove_punctuation = str.maketrans('', '', string.punctuation)  # remove punctuation
     filename = citation_title.translate(remove_punctuation).replace(' ', '_')
     filename = '.'.join((doi.replace('/', '.'), filename, 'pdf'))
@@ -62,7 +66,7 @@ def download(doi: str, proxies: dict[str, str] | None = None) -> bool:
 
     content_path = f'{repository_path}/.scidock/content.json'
     repository_content = load_json(content_path)
-    repository_content[filename] = asdict(Metadata(citation_title, doi))
+    repository_content['local'][filename] = asdict(Metadata(citation_title, doi))
     dump_json(repository_content, content_path)
 
     return True

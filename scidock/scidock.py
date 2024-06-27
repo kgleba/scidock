@@ -1,5 +1,8 @@
 import platform
+import re
 import subprocess
+from collections.abc import Iterator
+from dataclasses import asdict
 from ipaddress import IPv4Address, IPv6Address
 from pathlib import Path
 from pprint import pformat
@@ -14,10 +17,64 @@ from scidock.config import logger
 from scidock.search_engines import arxiv_engine as arxiv
 from scidock.search_engines import crossref_engine as crossref
 from scidock.search_engines import scihub_engine as scihub
+from scidock.search_engines.metadata import Metadata
 from scidock.ui import progress_bar
-from scidock.utils import dump_json, get_current_proxy_setting, get_default_repository_path, load_json, random_chain, remove_outdated_repos
+from scidock.utils import (
+    dump_json,
+    get_current_proxy_setting,
+    get_default_repository_path,
+    load_json,
+    random_chain,
+    remove_outdated_repos,
+    require_initialized_repository,
+)
 
 FUZZY_MATCH_RATE = 75
+
+
+def update_recent_searches(paper: str):
+    split_location = re.search(r'\. DOI: ', paper)
+    title, doi = paper[:split_location.start()], paper[split_location.end():]
+
+    repository_path = get_default_repository_path()
+    content_path = f'{repository_path}/.scidock/content.json'
+
+    repository_content = load_json(content_path)
+    repository_content['recent_searches'][title] = asdict(Metadata(title, doi))
+    dump_json(repository_content, content_path)
+
+
+def split_search_results(query: str, arxiv_results: Iterator, search_results: Iterator) -> tuple[list, Iterator]:
+    # approach of defining the cutoff value for CrossRef relevance scores
+    search_prefix = []
+    prefix_score_ratios = []
+    prefix_max = -1
+    previous_score = 0
+
+    arxiv_ids = arxiv.extract_arxiv_ids(query)
+
+    if arxiv_ids:
+        search_prefix += list(map(str, arxiv_results))
+    arxiv_results = iter(arxiv_results)
+    first_arxiv_result = str(next(arxiv_results, ''))
+
+    for search_result in search_results:
+        search_prefix.append(str(search_result))
+
+        prefix_max = max(prefix_max, search_result.relevance_score)
+        prefix_score_ratios.append((search_result.relevance_score - previous_score) / prefix_max)
+        if len(search_prefix) >= 8:  # noqa: PLR2004 - arbitrary number, should be tweaked afterwards
+            best_score_ratio = prefix_score_ratios.index(max(prefix_score_ratios[1:]))
+            insert_point = best_score_ratio + 2
+            search_prefix.insert(insert_point, questionary.Separator())
+            search_prefix[insert_point:insert_point] = [first_arxiv_result] + [str(next(arxiv_results, '')) for _ in range(4)]
+            search_prefix = list(filter(lambda result: result, search_prefix))
+
+            break
+
+    search_results = random_chain(search_results, arxiv_results, weights=[0.4, 0.6])
+
+    return search_prefix, search_results
 
 
 @click.group()
@@ -76,14 +133,14 @@ def init(repository_path: Path, name: str | None):
     current_config['default'] = new_repository_name
     current_config['proxy'] = {}
 
-    dump_json({}, scidock_repo_root / 'content.json')
+    dump_json({'local': {}, 'recent_searches': {}}, scidock_repo_root / 'content.json')
     dump_json(current_config, scidock_root / 'config.json')
 
     logger.info(f'Initialized repository with the following setup: {pformat(current_config)}')
     click.echo('Successfully initialized the repository!')
 
 
-def download(query: str, proxies: dict[str, str] | None = None):
+def download(query: str, proxies: dict[str, str] | None = None) -> bool:
     logger.info(f'Received download request with {query = }')
 
     query_dois = crossref.extract_dois(query)
@@ -96,16 +153,17 @@ def download(query: str, proxies: dict[str, str] | None = None):
     if target_arxiv_ids:
         arxiv.download(target_arxiv_ids[0])
         click.echo('Successfully downloaded the paper!')
-        return
+        return True
 
     if scihub.download(target_doi, proxies):
         click.echo('Successfully downloaded the paper!')
-        return
+        return True
 
     click.echo('A downloadable version of this work could not be found :(')
+    return False
 
 
-def search(query: str, proxy: bool):
+def search(query: str, proxy: bool, extended: bool):
     # Suggested Workflow
     # Users get suggestions based on the relevance score provided by CrossRef
     # They are also provided with the option to open a pager (like GNU less) and scroll through more data generated on the fly
@@ -117,17 +175,9 @@ def search(query: str, proxy: bool):
         proxies = get_current_proxy_setting()
 
     progress_bar.start()
-
-    # approach of defining the cutoff value for CrossRef relevance scores
-    search_prefix = []
-    prefix_score_ratios = []
-    prefix_max = -1
-    previous_score = 0
-
     progress_bar.update('Searching the CrossRef database...')
 
     n_search_results, search_results = crossref.search(query)
-
     if n_search_results > 10_000:  # noqa: PLR2004 - arbitrary number, should be tweaked afterwards
         progress_bar.stop()
 
@@ -140,32 +190,10 @@ def search(query: str, proxy: bool):
 
     progress_bar.update('Searching through the arXiv preprints...')
 
-    arxiv_ids = arxiv.extract_arxiv_ids(query)
-    arxiv_results = arxiv.search(query)
-    if arxiv_ids:
-        search_prefix += list(map(str, arxiv_results))
-    arxiv_results = iter(arxiv_results)
-    first_arxiv_result = str(next(arxiv_results, ''))
+    arxiv_results = arxiv.search(query, extended)
+    search_prefix, search_results = split_search_results(query, arxiv_results, search_results)
 
-    # TODO: prefer downloadable options of the same paper
-
-    for search_result in search_results:
-        search_prefix.append(str(search_result))
-
-        prefix_max = max(prefix_max, search_result.relevance_score)
-        prefix_score_ratios.append((search_result.relevance_score - previous_score) / prefix_max)
-        if len(search_prefix) >= 8:  # noqa: PLR2004 - arbitrary number, should be tweaked afterwards
-            progress_bar.stop()
-
-            best_score_ratio = prefix_score_ratios.index(max(prefix_score_ratios[1:]))
-            insert_point = best_score_ratio + 2
-            search_prefix.insert(insert_point, questionary.Separator())
-            search_prefix[insert_point:insert_point] = [first_arxiv_result] + [str(next(arxiv_results, '')) for _ in range(4)]
-            search_prefix = list(filter(lambda result: result, search_prefix))
-
-            break
-
-    search_results = random_chain(search_results, arxiv_results, weights=[0.4, 0.6])
+    progress_bar.stop()
 
     try:
         # noinspection PyTypeChecker
@@ -179,23 +207,42 @@ def search(query: str, proxy: bool):
         return
 
     if desired_paper is not None:
-        download(desired_paper, proxies)
+        download_status = download(desired_paper, proxies)
+
+        if not download_status:
+            update_recent_searches(desired_paper)
 
 
 def open_pdf(query: str):
     repository_path = get_default_repository_path()
     repository_content = load_json(f'{repository_path}/.scidock/content.json')
 
-    filenames = list(repository_content.keys())
-    metadata = [' '.join(entry.values()) for entry in repository_content.values()]
+    query_dois = crossref.extract_dois(query)
+    query_arxiv_ids = arxiv.extract_arxiv_ids_strictly(query)
+    query_ids = query_dois + query_arxiv_ids
+    if len(query_ids) > 1:
+        raise click.BadParameter('Specified too many IDs: impossible to open single paper')
+
+    filenames = list(repository_content['local'].keys())
+    titles = [entry['title'] for entry in repository_content['local'].values()]
+    dois = [entry['DOI'] for entry in repository_content['local'].values()]
 
     # noinspection PyTypeChecker
     # authors of the `rapidfuzz` library incorrectly specified the signature of the function
-    best_match = process.extractOne(query, metadata, scorer=fuzz.partial_token_ratio, score_cutoff=FUZZY_MATCH_RATE,
-                                    processor=default_process)
-    if best_match is None:
+    best_title_match = process.extractOne(query, titles, scorer=fuzz.WRatio, score_cutoff=FUZZY_MATCH_RATE,
+                                          processor=default_process)
+
+    best_id_match = None
+    if query_ids:
+        # noinspection PyTypeChecker
+        best_id_match = process.extractOne(query_ids[0], dois, scorer=fuzz.WRatio, score_cutoff=FUZZY_MATCH_RATE,
+                                           processor=default_process)
+
+    if best_title_match is None and best_id_match is None:
         click.echo('Did not find any relevant papers :(')
         return
+
+    best_match = best_id_match if best_id_match is not None else best_title_match
 
     best_match_filename = filenames[best_match[2]]
     best_match_path = f'"{repository_path}/{best_match_filename}"'
@@ -229,13 +276,17 @@ def init_command(repository_path: Path, name: str | None):
 @click.command('search')
 @click.argument('query', type=str)
 @click.option('--proxy', is_flag=True, default=False, help='Whether to use a proxy in subsequent download requests')
-def search_command(query: str, proxy: bool):
-    search(query, proxy)
+@click.option('--extended', is_flag=True, default=False,
+              help='Whether to include abstract and other fields in the search. Defaults to False (search by title only)')
+@require_initialized_repository
+def search_command(query: str, proxy: bool, extended: bool):
+    search(query, proxy, extended)
 
 
 @click.command('download')
 @click.argument('DOI', type=str)
 @click.option('--proxy', is_flag=True, default=False, help='Whether to use a proxy in download requests')
+@require_initialized_repository
 def download_command(doi: str, proxy: bool):
     proxies = {}
     if proxy:
@@ -246,6 +297,7 @@ def download_command(doi: str, proxy: bool):
 
 @click.command('open')
 @click.argument('query', type=str)
+@require_initialized_repository
 def open_command(query: str):
     open_pdf(query)
 

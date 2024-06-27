@@ -1,6 +1,6 @@
 import json
 import random
-from functools import cache
+from functools import cache, wraps
 from ipaddress import IPv4Address, IPv6Address
 from os import PathLike
 from pathlib import Path
@@ -31,6 +31,31 @@ def get_default_repository_path() -> str | None:
         return repositories['repositories'][repositories['default']]['path']
 
     return None
+
+
+def is_repository_initialized() -> bool:
+    scidock_root = Path('~/.scidock').expanduser()
+
+    if not (scidock_root / 'config.json').exists():
+        return False
+
+    repositories = load_json(scidock_root / 'config.json')
+    if repositories.get('default') is None:
+        return False
+
+    return True
+
+
+def require_initialized_repository(func):
+    @wraps(func)
+    def init_wrapper(*args, **kwargs):
+        if not is_repository_initialized():
+            logger.error('At least one repository should be initialized! See `scidock init --help`')
+            return None
+
+        return func(*args, **kwargs)
+
+    return init_wrapper
 
 
 def remove_outdated_repos(repositories: dict) -> dict:
@@ -68,6 +93,7 @@ def responsive_cache(func):
     def format_kwargs(kwargs) -> str:
         return ', '.join(f'{k}={v!r}' for k, v in kwargs.items())
 
+    @wraps(func)
     def notification_wrapper(*args, **kwargs):
         hits = func.cache_info().hits
         func_return = func(*args, **kwargs)

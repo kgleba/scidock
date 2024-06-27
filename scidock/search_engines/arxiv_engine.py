@@ -26,7 +26,7 @@ class ArXivItem:
         return f'{self.title.rstrip('.')}. DOI: {self.DOI}'
 
 
-def search(query: str) -> Iterator[ArXivItem]:
+def search(query: str, extended: bool = False) -> Iterator[ArXivItem]:
     arxiv_ids = extract_arxiv_ids(query)
     logger.info(f'Extracted arXiv IDs: {arxiv_ids!r}')
 
@@ -46,7 +46,7 @@ def search(query: str) -> Iterator[ArXivItem]:
 
     # TODO: do something clever with extracting titles
 
-    search_query += 'all:' + clear_query(query)
+    search_query += ('all:' if extended else 'ti:') + clear_query(query)
     search_request = arxiv.Search(query=search_query, sort_by=arxiv.SortCriterion.Relevance)
 
     for paper in client.results(search_request):
@@ -66,5 +66,5 @@ def download(arxiv_id: str):
 
     content_path = f'{repository_path}/.scidock/content.json'
     repository_content = load_json(content_path)
-    repository_content[filename] = asdict(Metadata(paper.title, f'10.48550/arXiv.{paper.get_short_id()}'))
+    repository_content['local'][filename] = asdict(Metadata(paper.title, f'10.48550/arXiv.{paper.get_short_id()}'))
     dump_json(repository_content, content_path)
