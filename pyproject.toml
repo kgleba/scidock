@@ -1,9 +1,13 @@
 [tool.poetry]
 name = "scidock"
 version = "0.1.0"
-description = ""
+description = "CLI interface for finding, downloading and managing scientific articles"
 authors = ["kgleba <kgleba@yandex.ru>"]
 readme = "README.md"
+repository = "https://github.com/kgleba/scidock"
+packages = [
+    { include = "scidock" }
+]
 
 [tool.poetry.dependencies]
 python = "^3.12"

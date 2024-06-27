@@ -1,15 +1,14 @@
-# SciDock Alpha
+# SciDock
+
+SciDock is a CLI tool designed to provide a user-friendly interface for finding, downloading and managing scientific articles of your interest!  
 
 ## Installation
 
-Soon this project will be published on [PyPI](https://pypi.org/), and `pip` will become the preferred installation method.
-
-For now, install it manually:
-
 ```shell
-git clone https://github.com/kgleba/scidock.git
-pip install .
+pip install scidock
 ```
+
+You must have Python 3.12+ installed!
 
 ### Development installation
 
