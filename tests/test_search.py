@@ -18,7 +18,7 @@ def _init_repo():
     scidock.init(Path('./test_repo'))
 
 
-@pytest.mark.usefixtures('init_repo')
+@pytest.mark.usefixtures('_init_repo')
 @pytest.mark.parametrize('test_case', SEARCH_TEST_CASES)
 def test_search_tui(test_case: SearchTestCase):
     query = test_case.query
