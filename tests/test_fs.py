@@ -1,4 +1,4 @@
-# ruff: noqa: S101
+# ruff: noqa: S101, I001
 
 import json
 import shutil
@@ -81,6 +81,6 @@ def test_file_presence(test_path: Path, test_case: SearchTestCase):
 
 def test_files_amount(test_path: Path):
     filenames = [file.name for file in test_path.glob('**/*') if file.is_file()]
-    n_downloadable_testcases = len(set([test_case.filename for test_case in SEARCH_TEST_CASES if test_case.filename is not None]))
+    n_downloadable_testcases = len({test_case.filename for test_case in SEARCH_TEST_CASES if test_case.filename is not None})
 
     assert len(filenames) == n_downloadable_testcases

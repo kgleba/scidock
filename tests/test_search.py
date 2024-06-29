@@ -1,18 +1,21 @@
-import pytest
+# ruff: noqa: S101, I001
+
 import re
-import pexpect
-from . import SEARCH_TEST_CASES, SearchTestCase
-from scidock import scidock
 from pathlib import Path
+
+import pexpect
+import pytest
+
+from scidock import scidock
+from . import SEARCH_TEST_CASES, SearchTestCase
 
 # source: https://stackoverflow.com/questions/14693701/how-can-i-remove-the-ansi-escape-sequences-from-a-string-in-python
 ANSI_ESCAPE_PATTERN = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
 
 
-@pytest.fixture
-def init_repo():
+@pytest.fixture()
+def _init_repo():
     scidock.init(Path('./test_repo'))
-    yield
 
 
 @pytest.mark.usefixtures('init_repo')
