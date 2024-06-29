@@ -163,7 +163,7 @@ def download(query: str, proxies: dict[str, str] | None) -> bool:
     return False
 
 
-def search(query: str, proxy: bool, extended: bool):
+def search(query: str, proxy: bool, extended: bool, not_interactive: bool):
     # Suggested Workflow
     # Users get suggestions based on the relevance score provided by CrossRef
     # They are also provided with the option to open a pager (like GNU less) and scroll through more data generated on the fly
@@ -178,7 +178,7 @@ def search(query: str, proxy: bool, extended: bool):
     progress_bar.update('Searching the CrossRef database...')
 
     n_search_results, search_results = crossref.search(query)
-    if n_search_results > 1_000_000:  # noqa: PLR2004 - arbitrary number, should be tweaked afterwards
+    if not not_interactive and n_search_results > 1_000_000:  # noqa: PLR2004 - arbitrary number, should be tweaked afterwards
         progress_bar.stop()
 
         refine_query = questionary.confirm(
@@ -278,9 +278,10 @@ def init_command(repository_path: Path, name: str | None):
 @click.option('--proxy', is_flag=True, default=False, help='Whether to use a proxy in subsequent download requests')
 @click.option('--extended', is_flag=True, default=False,
               help='Whether to include abstract and other fields in the search. Defaults to False (search by title only)')
+@click.option('-n', '--not-interactive', is_flag=True, default=False, help='Disable unnecessary interactions')
 @require_initialized_repository
-def search_command(query: str, proxy: bool, extended: bool):
-    search(query, proxy, extended)
+def search_command(query: str, proxy: bool, extended: bool, not_interactive: bool):
+    search(query, proxy, extended, not_interactive)
 
 
 @click.command('download')
