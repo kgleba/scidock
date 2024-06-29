@@ -2,7 +2,7 @@ name: Test with PyTest
 on: [ push, pull_request ]
 
 jobs:
-  lint:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -13,8 +13,8 @@ jobs:
       - name: Install project and setup the test environment
         run: poetry install --no-interaction --without=dev
       - name: Run FS pre-init tests
-        run: pytest tests/test_fs.py -k init
+        run: python -m pytest tests/test_fs.py -k init
       - name: Run search tests
-        run: pytest tests/test_search.py
+        run: python -m pytest tests/test_search.py
       - name: Run FS post-init tests
-        run: pytest tests/test_fs.py -k 'not init'
+        run: python -m pytest tests/test_fs.py -k 'not init'
