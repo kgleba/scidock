@@ -57,6 +57,12 @@ class IterativeInquirerControl(InquirerControl):
                 new_window = self.trace[self.trace_index + 1:self.trace_index + self.WINDOW_SIZE + 1]
                 self.choices = [Choice.build(c) for c in new_window]
 
+        if self.choice_count == 0:
+            self.choices = [Choice.build(self.trace[0])]
+            self.pointed_at = 0
+            self.trace_index = 0
+            return
+
         self.pointed_at = (self.pointed_at + 1) % self.choice_count
         self.trace_index += 1
 

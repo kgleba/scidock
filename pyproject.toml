@@ -28,6 +28,7 @@ ruff = "^0.4.9"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8.2.2"
+pexpect = "^4.9.0"
 
 [tool.poetry.scripts]
 scidock = "scidock.scidock:main"

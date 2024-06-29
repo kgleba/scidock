@@ -12,3 +12,5 @@ scidock/config/__pycache__/*
 tests/__pycache__/*
 
 dist/*
+
+Dockerfile

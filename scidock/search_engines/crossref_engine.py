@@ -30,12 +30,12 @@ class CrossRefItem:
 
 
 @responsive_cache
-def _perform_query(*args, **kwargs) -> Works:
+def perform_query(*args, **kwargs) -> Works:
     return engine.query(*args, **kwargs)
 
 
 @responsive_cache
-def _prepare_query_args(query: str) -> tuple[list[str], dict[str, str]]:
+def prepare_query_args(query: str) -> tuple[list[str], dict[str, str]]:
     search_params = {}
 
     names = extract_names(query)
@@ -52,49 +52,49 @@ def _prepare_query_args(query: str) -> tuple[list[str], dict[str, str]]:
     return keywords, search_params
 
 
+def extract_metadata(paper: dict) -> CrossRefItem:
+    if 'xmlns' in ''.join(paper.get('title', ())):
+        logger.warning(
+            'CrossRef responses might have MathML in metadata elements (such as title), which might lead to the parsing errors. '
+            'See: https://www.crossref.org/documentation/schema-library/markup-guide-metadata-segments/mathml. '
+            'I\'m aware of the issue and working on transforming it into the printable math format.')
+
+    yield CrossRefItem(' / '.join(paper.get('title', ('UNTITLED',))), paper.get('DOI'), paper.get('score', 1000.0))
+
+
 def search(query: str) -> tuple[int, Iterator[CrossRefItem]]:
     plain_query = simplify_query(query)
-    if not plain_query.strip():
-        return 0, iter([])
 
-    keywords, search_params = _prepare_query_args(query)
-    search_query = _perform_query(*keywords, **search_params)
-    search_iter = iter(search_query)
+    first_search_result = {}
+    search_iter = iter([])
+    n_search_results = 0
 
-    logger.info('Launching concurrent requests')
-    with ThreadPoolExecutor() as pool:
-        count_future = pool.submit(search_query.count)
-        search_future = pool.submit(next, search_iter)
+    if plain_query.strip():
+        keywords, search_params = prepare_query_args(query)
+        search_query = perform_query(*keywords, **search_params)
+        search_iter = iter(search_query)
 
-        n_search_results = count_future.result()
-        first_search_result = search_future.result()
+        logger.info('Launching concurrent requests')
+        with ThreadPoolExecutor() as pool:
+            count_future = pool.submit(search_query.count)
+            search_future = pool.submit(next, search_iter)
+
+            n_search_results = count_future.result()
+            first_search_result = search_future.result()
 
     def retrieve_papers() -> Iterator[CrossRefItem]:
         dois = extract_dois(query)
         for doi in dois:
             paper = engine.doi(doi)
+            yield from extract_metadata(paper)
 
-            if 'xmlns' in ''.join(paper.get('title', ())):
-                logger.warning(
-                    'CrossRef responses might have MathML in metadata elements (such as title), which might lead to the parsing errors. '
-                    'See: https://www.crossref.org/documentation/schema-library/markup-guide-metadata-segments/mathml. '
-                    'I\'m aware of the issue and working on transforming it into the printable math format.')
-
-            yield CrossRefItem(' / '.join(paper.get('title', ('UNTITLED',))), paper['DOI'])
-
-        yield CrossRefItem(' / '.join(first_search_result.get('title', ('UNTITLED',))), first_search_result['DOI'],
-                           first_search_result['score'])
+        if plain_query.strip():
+            yield from extract_metadata(first_search_result)
 
         for paper in search_iter:
             if None in (paper.get('title'), paper.get('DOI'), paper.get('score')):
                 logger.warning(f'Received the paper with an unusual metadata: {pformat(paper)}')
 
-            if 'xmlns' in ''.join(paper.get('title', ())):
-                logger.warning(
-                    'CrossRef responses might have MathML in metadata elements (such as title), which might lead to the parsing errors. '
-                    'See: https://www.crossref.org/documentation/schema-library/markup-guide-metadata-segments/mathml. '
-                    'I\'m aware of the issue and working on transforming it into the printable math format.')
-
-            yield CrossRefItem(' / '.join(paper.get('title', ('UNTITLED',))), paper['DOI'], paper['score'])
+            yield from extract_metadata(paper)
 
     return n_search_results, next(iter(retrieve_papers, None))
