@@ -72,15 +72,17 @@ def test_init_path_only(tmp_path: Path):
 
 
 @pytest.mark.parametrize('test_case', SEARCH_TEST_CASES)
-def test_file_presence(test_path: Path, test_case: SearchTestCase):
-    filenames = [file.name for file in test_path.glob('**/*')]
+def test_file_presence(test_case: SearchTestCase):
+    test_path = Path('./repo')
+    filenames = [file.name for file in test_path.glob('*')]
 
     if test_case.filename is not None:
         assert test_case.filename in filenames
 
 
-def test_files_amount(test_path: Path):
-    filenames = [file.name for file in test_path.glob('**/*') if file.is_file()]
+def test_files_amount():
+    test_path = Path('./repo')
+    filenames = [file.name for file in test_path.glob('*') if file.is_file()]
     n_downloadable_testcases = len({test_case.filename for test_case in SEARCH_TEST_CASES if test_case.filename is not None})
 
     assert len(filenames) == n_downloadable_testcases

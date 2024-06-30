@@ -13,9 +13,9 @@ from . import SEARCH_TEST_CASES, SearchTestCase
 ANSI_ESCAPE_PATTERN = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
 
 
-@pytest.fixture()
+@pytest.fixture(scope='session')
 def _init_repo():
-    scidock.init(Path('./test_repo'))
+    scidock.init(Path('./repo'))
 
 
 @pytest.mark.usefixtures('_init_repo')

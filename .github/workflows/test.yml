@@ -1,4 +1,4 @@
-name: Test with PyTest
+name: Test with PyTest (verbose)
 on: [ push, pull_request ]
 
 jobs:
@@ -9,12 +9,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - uses: snok/install-poetry@v1
-      - name: Install project and setup the test environment
-        run: poetry install --no-interaction --without=dev
+      - name: Install project
+        run: pip install .
+      - name: Setup the test environment
+        run: pip install pexpect pytest
       - name: Run FS pre-init tests
-        run: poetry run pytest tests/test_fs.py -k init
+        run: pytest tests/test_fs.py -k init
       - name: Run search tests
-        run: poetry run pytest tests/test_search.py
+        run: pytest tests/test_search.py
       - name: Run FS post-init tests
-        run: poetry run pytest tests/test_fs.py -k 'not init'
+        run: pytest tests/test_fs.py -k 'not init'
