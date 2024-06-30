@@ -1,4 +1,4 @@
-name: Test with PyTest (verbose)
+name: Test with PyTest
 on: [ push, pull_request ]
 
 jobs:
