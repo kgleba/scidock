@@ -178,15 +178,7 @@ def search(query: str, proxy: bool, extended: bool, not_interactive: bool):
     progress_bar.update('Searching the CrossRef database...')
 
     n_search_results, search_results = crossref.search(query)
-    if not not_interactive and n_search_results > 1_000_000:  # noqa: PLR2004 - arbitrary number, should be tweaked afterwards
-        progress_bar.stop()
-
-        refine_query = questionary.confirm(
-            f'There are more than {n_search_results:,} search results. Do you want to make your query more specific?').ask()
-        if refine_query:
-            return
-
-        progress_bar.start()
+    logger.info(f'Number of search results for {query = !r}: {n_search_results:,}')
 
     progress_bar.update('Searching through the arXiv preprints...')
 
@@ -245,7 +237,9 @@ def open_pdf(query: str):
     best_match = best_id_match if best_id_match is not None else best_title_match
 
     best_match_filename = filenames[best_match[2]]
-    best_match_path = f'"{repository_path}/{best_match_filename}"'
+    best_match_path = f'{repository_path}/{best_match_filename}'
+    if ' ' in best_match_path:
+        best_match_path = f'"{best_match_path}"'
 
     logger.info(f'Best Match Relevance Score: {best_match[1]}')
 

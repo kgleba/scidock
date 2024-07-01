@@ -65,7 +65,7 @@ def extract_metadata(paper: dict) -> CrossRefItem:
 def search(query: str) -> tuple[int, Iterator[CrossRefItem]]:
     plain_query = simplify_query(query)
 
-    first_search_result = {}
+    first_search_result = None
     search_iter = iter([])
     n_search_results = 0
 
@@ -77,7 +77,7 @@ def search(query: str) -> tuple[int, Iterator[CrossRefItem]]:
         logger.info('Launching concurrent requests')
         with ThreadPoolExecutor() as pool:
             count_future = pool.submit(search_query.count)
-            search_future = pool.submit(next, search_iter)
+            search_future = pool.submit(lambda iterator: next(iterator, None), search_iter)
 
             n_search_results = count_future.result()
             first_search_result = search_future.result()
@@ -88,7 +88,7 @@ def search(query: str) -> tuple[int, Iterator[CrossRefItem]]:
             paper = engine.doi(doi)
             yield from extract_metadata(paper)
 
-        if plain_query.strip():
+        if first_search_result is not None:
             yield from extract_metadata(first_search_result)
 
         for paper in search_iter:
