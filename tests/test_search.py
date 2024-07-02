@@ -34,5 +34,5 @@ def test_search_tui(test_case: SearchTestCase):
     response = re.sub(ANSI_ESCAPE_PATTERN, '', response)
     response = response.replace('\r', '').replace('\n', '')
 
-    assert 'Successfully downloaded the paper!' in response or 'A downloadable version of this work could not be found :(' in response
+    assert 'Successfully downloaded the paper!' in response or 'A downloadable version of this work could not be found automatically :(' in response
     assert f'Choose the suitable paper to add to your library {expected_title}' in response
