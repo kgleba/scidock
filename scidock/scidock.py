@@ -18,6 +18,7 @@ from scidock.search_engines import arxiv_engine as arxiv
 from scidock.search_engines import crossref_engine as crossref
 from scidock.search_engines import scihub_engine as scihub
 from scidock.search_engines.metadata import Metadata
+from scidock.search_engines.web_parser import attempt_download
 from scidock.ui import progress_bar
 from scidock.utils import (
     dump_json,
@@ -147,23 +148,39 @@ def download(query: str, proxies: dict[str, str] | None) -> bool:
     if len(query_dois) != 1:
         raise click.BadParameter('Target DOI is either not specified or ambiguous')
 
+    progress_bar.start()
+    progress_bar.update('Searching for a downloadable copy of the chosen paper...')
+
     target_doi = query_dois[0]
 
     target_arxiv_ids = arxiv.extract_arxiv_ids_strictly(target_doi)
     if target_arxiv_ids:
         arxiv.download(target_arxiv_ids[0])
+        progress_bar.stop()
         click.echo('Successfully downloaded the paper!')
         return True
 
     if scihub.download(target_doi, proxies):
+        progress_bar.stop()
         click.echo('Successfully downloaded the paper!')
         return True
 
-    click.echo('A downloadable version of this work could not be found :(')
+    attempt_success, recommended_url = attempt_download(target_doi, proxies)
+    if attempt_success:
+        progress_bar.stop()
+        click.echo('Successfully downloaded the paper!')
+        return True
+
+    progress_bar.stop()
+    click.echo('A downloadable version of this work could not be found automatically :(')
+
+    if recommended_url:
+        click.echo(f'However, you could try and download the paper from the publisher\'s website manually: {recommended_url}')
+
     return False
 
 
-def search(query: str, proxy: bool, extended: bool, not_interactive: bool):
+def search(query: str, proxy: bool, extended: bool):
     # Suggested Workflow
     # Users get suggestions based on the relevance score provided by CrossRef
     # They are also provided with the option to open a pager (like GNU less) and scroll through more data generated on the fly
@@ -272,10 +289,9 @@ def init_command(repository_path: Path, name: str | None):
 @click.option('--proxy', is_flag=True, default=False, help='Whether to use a proxy in subsequent download requests')
 @click.option('--extended', is_flag=True, default=False,
               help='Whether to include abstract and other fields in the search. Defaults to False (search by title only)')
-@click.option('-n', '--not-interactive', is_flag=True, default=False, help='Disable unnecessary interactions')
 @require_initialized_repository
-def search_command(query: str, proxy: bool, extended: bool, not_interactive: bool):
-    search(query, proxy, extended, not_interactive)
+def search_command(query: str, proxy: bool, extended: bool):
+    search(query, proxy, extended)
 
 
 @click.command('download')

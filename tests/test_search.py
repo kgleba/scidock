@@ -25,7 +25,7 @@ def test_search_tui(test_case: SearchTestCase):
     step = test_case.position - 1
     expected_title = test_case.title
 
-    process = pexpect.spawn(f'scidock search -n "{query}"')
+    process = pexpect.spawn(f'scidock search "{query}"')
     process.expect('Choose the suitable paper to add to your library')
     process.send(b'\x1b[B' * step + b'\x0d')
     process.expect(pexpect.EOF)

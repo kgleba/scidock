@@ -1,17 +1,14 @@
 import string
-from dataclasses import asdict
 
 import requests
 from bs4 import BeautifulSoup
 
 from scidock.config import logger
-from scidock.search_engines.metadata import Metadata
-from scidock.utils import dump_json, get_default_repository_path, load_json
+from scidock.utils import save_file_to_repo
 
 # TODO: make mirrors dynamic or more configurable
 SCIHUB_MIRRORS = ['https://sci-hub.ru', 'https://sci-hub.se', 'https://sci-hub.st']
-
-KB = 1024
+SCIDB_MIRRORS = ['https://annas-archive.gs/scidb', 'https://annas-archive.se/scidb']
 
 
 def download(doi: str, proxies: dict[str, str] | None = None) -> bool:
@@ -52,21 +49,8 @@ def download(doi: str, proxies: dict[str, str] | None = None) -> bool:
     citation_italic = citation_container.findChild('i')
     citation_title = citation_italic.text if citation_italic is not None else citation_container.text
 
-    remove_punctuation = str.maketrans('', '', string.punctuation)  # remove punctuation
+    remove_punctuation = str.maketrans('', '', string.punctuation)
     filename = citation_title.translate(remove_punctuation).replace(' ', '_')
     filename = '.'.join((doi.replace('/', '.'), filename, 'pdf'))
 
-    logger.info(f'Attempting to download a file with {filename = } and {download_link = } for {doi = }')
-
-    repository_path = get_default_repository_path()
-    downloaded_file = requests.get(download_link, proxies=proxies, stream=True, timeout=10)
-    with open(f'{repository_path}/{filename}', 'wb') as paper_file:
-        for chunk in downloaded_file.iter_content(chunk_size=10 * KB):
-            paper_file.write(chunk)
-
-    content_path = f'{repository_path}/.scidock/content.json'
-    repository_content = load_json(content_path)
-    repository_content['local'][filename] = asdict(Metadata(citation_title, doi))
-    dump_json(repository_content, content_path)
-
-    return True
+    return save_file_to_repo(download_link, filename, doi, citation_title, 'Sci-Hub', proxies)

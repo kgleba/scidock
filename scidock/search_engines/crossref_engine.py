@@ -52,14 +52,17 @@ def prepare_query_args(query: str) -> tuple[list[str], dict[str, str]]:
     return keywords, search_params
 
 
-def extract_metadata(paper: dict) -> CrossRefItem:
+def extract_metadata(paper: dict | None) -> CrossRefItem:
+    if paper is None:
+        paper = {}
+
     if 'xmlns' in ''.join(paper.get('title', ())):
         logger.warning(
             'CrossRef responses might have MathML in metadata elements (such as title), which might lead to the parsing errors. '
             'See: https://www.crossref.org/documentation/schema-library/markup-guide-metadata-segments/mathml. '
             'I\'m aware of the issue and working on transforming it into the printable math format.')
 
-    yield CrossRefItem(' / '.join(paper.get('title', ('UNTITLED',))), paper.get('DOI'), paper.get('score', 1000.0))
+    return CrossRefItem(' / '.join(paper.get('title', ('UNTITLED',))), paper.get('DOI'), paper.get('score', 1000.0))
 
 
 def search(query: str) -> tuple[int, Iterator[CrossRefItem]]:
@@ -86,15 +89,15 @@ def search(query: str) -> tuple[int, Iterator[CrossRefItem]]:
         dois = extract_dois(query)
         for doi in dois:
             paper = engine.doi(doi)
-            yield from extract_metadata(paper)
+            yield extract_metadata(paper)
 
         if first_search_result is not None:
-            yield from extract_metadata(first_search_result)
+            yield extract_metadata(first_search_result)
 
         for paper in search_iter:
             if None in (paper.get('title'), paper.get('DOI'), paper.get('score')):
                 logger.warning(f'Received the paper with an unusual metadata: {pformat(paper)}')
 
-            yield from extract_metadata(paper)
+            yield extract_metadata(paper)
 
     return n_search_results, next(iter(retrieve_papers, None))

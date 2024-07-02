@@ -91,6 +91,8 @@ Aesthetically pleasing demos will also appear here soon :D
 
 ✔️ [Sci-Hub](https://sci-hub.ru/) (for downloading paywalled PDFs by given DOI; might require a proxy though)
 
+✔️ Some resources that are known to publish works with open access: [IEEE](https://ieeexplore.ieee.org), [IntechOpen](https://www.intechopen.com/) and [MDPI](https://www.mdpi.com/)
+
 ❌ [Google Scholar](https://scholar.google.com/) (yet)
 
 ❌ [GeneralIndex](https://archive.org/details/GeneralIndex)

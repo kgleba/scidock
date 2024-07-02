@@ -1,12 +1,18 @@
 import json
 import random
+from dataclasses import asdict
 from functools import cache, wraps
 from ipaddress import IPv4Address, IPv6Address
 from os import PathLike
 from pathlib import Path
 from typing import Any
 
+import requests
+
 from scidock.config import logger
+from scidock.search_engines.metadata import Metadata
+
+KB = 1024
 
 
 def load_json(filename: str | PathLike) -> Any:
@@ -63,6 +69,38 @@ def remove_outdated_repos(repositories: dict) -> dict:
             up_to_date_repositories[repository_name] = repository
 
     return up_to_date_repositories
+
+
+def save_file_to_repo(download_link: str, filename: str, doi: str, title: str, caller_id: str,
+                      proxies: dict[str, str] | None = None) -> bool:
+    if proxies is None:
+        proxies = {}
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.3'}
+
+    logger.info(f'Attempting to download a file from {caller_id} with {filename = } and {download_link = } for {doi = }')
+
+    repository_path = get_default_repository_path()
+    download_page = requests.get(download_link, proxies=proxies, stream=True, headers=headers, timeout=10)
+
+    if download_page.status_code != 200:  # noqa: PLR2004 - the meaning and purpose of (status code) 200 are obvious from the context
+        logger.info(f'Download failed with {download_page.status_code = }')
+        return False
+
+    if download_page.headers.get('Content-Type') != 'application/pdf':
+        logger.info('Download failed as Content-Type of the page is not "application/pdf"')
+        return False
+
+    with open(f'{repository_path}/{filename}', 'wb') as paper_file:
+        for chunk in download_page.iter_content(chunk_size=10 * KB):
+            paper_file.write(chunk)
+
+    content_path = f'{repository_path}/.scidock/content.json'
+    repository_content = load_json(content_path)
+    repository_content['local'][filename] = asdict(Metadata(title, doi))
+    dump_json(repository_content, content_path)
+
+    return True
 
 
 def random_chain(*iterables, weights: list[float] | None = None):
