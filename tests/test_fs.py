@@ -74,7 +74,7 @@ def test_init_path_only(tmp_path: Path):
 @pytest.mark.parametrize('test_case', SEARCH_TEST_CASES)
 def test_file_presence(test_case: SearchTestCase):
     test_path = Path('./repo')
-    filenames = [file.name for file in test_path.glob('*')]
+    filenames = [file.name for file in test_path.glob('*') if file.is_file()]
 
     if test_case.filename is not None:
         assert test_case.filename in filenames

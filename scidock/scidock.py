@@ -153,7 +153,7 @@ def download(query: str, proxies: dict[str, str] | None) -> bool:
 
     target_doi = query_dois[0]
 
-    target_arxiv_ids = arxiv.extract_arxiv_ids(target_doi)
+    target_arxiv_ids = arxiv.extract_arxiv_ids(target_doi, allow_overlap=True, strict=True)
     if target_arxiv_ids:
         arxiv.download(target_arxiv_ids[0])
         progress_bar.stop()

@@ -39,12 +39,17 @@ def extract_dois(query: str) -> list[str]:
 
 
 @responsive_cache
-def extract_arxiv_ids(query: str) -> list[str]:
-    dois = extract_dois(query)
-    for doi in dois:
-        query = re.sub(f' *{doi} *', ' ', query)
+def extract_arxiv_ids(query: str, strict: bool = False, allow_overlap: bool = False) -> list[str]:
+    if not allow_overlap:
+        dois = extract_dois(query)
+        for doi in dois:
+            query = re.sub(f' *{doi} *', ' ', query)
 
-    return [''.join(match) for match in re.findall(ARXIV_PATTERN, query)]
+    pattern = ARXIV_PATTERN
+    if strict:
+        pattern = STRICT_ARXIV_PATTERN
+
+    return [''.join(match) for match in re.findall(pattern, query)]
 
 
 def extract_names(query: str) -> list[str] | None:
