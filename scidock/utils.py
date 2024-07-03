@@ -1,5 +1,6 @@
 import json
 import random
+import string
 from dataclasses import asdict
 from functools import cache, wraps
 from ipaddress import IPv4Address, IPv6Address
@@ -8,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import requests
+import tldextract
 
 from scidock.config import logger
 from scidock.search_engines.metadata import Metadata
@@ -27,6 +29,11 @@ def load_json(filename: str | PathLike) -> Any:
 def dump_json(data: Any, filename: str | PathLike) -> None:
     with open(filename, 'w', encoding='utf-8') as file:
         json.dump(data, file, ensure_ascii=False)
+
+
+def extract_domain(url: str) -> str:
+    url_metadata = tldextract.extract(url)
+    return '.'.join((url_metadata.domain, url_metadata.suffix))
 
 
 def get_default_repository_path() -> str | None:
@@ -81,14 +88,19 @@ def save_file_to_repo(download_link: str, filename: str, doi: str, title: str, c
     logger.info(f'Attempting to download a file from {caller_id} with {filename = } and {download_link = } for {doi = }')
 
     repository_path = get_default_repository_path()
-    download_page = requests.get(download_link, proxies=proxies, stream=True, headers=headers, timeout=10)
+    try:
+        download_page = requests.get(download_link, proxies=proxies, stream=True, headers=headers, timeout=5)
+    except requests.exceptions.ConnectTimeout:
+        logger.info(f'Download failed as {extract_domain(download_link)} is not responding')
+        return False
 
     if download_page.status_code != 200:  # noqa: PLR2004 - the meaning and purpose of (status code) 200 are obvious from the context
         logger.info(f'Download failed with {download_page.status_code = }')
         return False
 
-    if download_page.headers.get('Content-Type') != 'application/pdf':
-        logger.info('Download failed as Content-Type of the page is not "application/pdf"')
+    content_type = download_page.headers.get('Content-Type')
+    if content_type not in ('application/pdf', 'application/octet-stream'):
+        logger.info(f'Download failed as Content-Type of the page is "{content_type}"')
         return False
 
     with open(f'{repository_path}/{filename}', 'wb') as paper_file:
@@ -101,6 +113,13 @@ def save_file_to_repo(download_link: str, filename: str, doi: str, title: str, c
     dump_json(repository_content, content_path)
 
     return True
+
+
+def filename_from_metadata(doi: str, title: str) -> str:
+    title = title.strip()
+    remove_punctuation = str.maketrans('', '', string.punctuation)
+    filename = title.translate(remove_punctuation).replace(' ', '_')
+    return '.'.join((doi.replace('/', '.'), filename, 'pdf'))
 
 
 def random_chain(*iterables, weights: list[float] | None = None):

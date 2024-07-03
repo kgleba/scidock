@@ -5,12 +5,12 @@ import arxiv
 
 from scidock.config import logger
 from scidock.search_engines.metadata import Metadata
-from scidock.search_engines.query_parser import clear_query, extract_arxiv_ids, extract_arxiv_ids_strictly, extract_names
+from scidock.search_engines.query_parser import clear_query, extract_arxiv_ids, extract_names
 from scidock.utils import dump_json, get_default_repository_path, load_json
 
 client = arxiv.Client()
 
-__all__ = ('search', 'download', 'extract_arxiv_ids', 'extract_arxiv_ids_strictly')
+__all__ = ('search', 'download', 'extract_arxiv_ids')
 
 
 @dataclass

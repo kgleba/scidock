@@ -40,12 +40,11 @@ def extract_dois(query: str) -> list[str]:
 
 @responsive_cache
 def extract_arxiv_ids(query: str) -> list[str]:
+    dois = extract_dois(query)
+    for doi in dois:
+        query = re.sub(f' *{doi} *', ' ', query)
+
     return [''.join(match) for match in re.findall(ARXIV_PATTERN, query)]
-
-
-@responsive_cache
-def extract_arxiv_ids_strictly(query: str) -> list[str]:
-    return [''.join(match) for match in re.findall(STRICT_ARXIV_PATTERN, query)]
 
 
 def extract_names(query: str) -> list[str] | None:

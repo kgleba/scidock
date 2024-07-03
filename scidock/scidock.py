@@ -153,7 +153,7 @@ def download(query: str, proxies: dict[str, str] | None) -> bool:
 
     target_doi = query_dois[0]
 
-    target_arxiv_ids = arxiv.extract_arxiv_ids_strictly(target_doi)
+    target_arxiv_ids = arxiv.extract_arxiv_ids(target_doi)
     if target_arxiv_ids:
         arxiv.download(target_arxiv_ids[0])
         progress_bar.stop()
@@ -227,7 +227,7 @@ def open_pdf(query: str):
     repository_content = load_json(f'{repository_path}/.scidock/content.json')
 
     query_dois = crossref.extract_dois(query)
-    query_arxiv_ids = arxiv.extract_arxiv_ids_strictly(query)
+    query_arxiv_ids = arxiv.extract_arxiv_ids(query)
     query_ids = query_dois + query_arxiv_ids
     if len(query_ids) > 1:
         raise click.BadParameter('Specified too many IDs: impossible to open single paper')
