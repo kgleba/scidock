@@ -4,8 +4,8 @@ from dataclasses import asdict, dataclass
 import arxiv
 
 from scidock.config import logger
+from scidock.parsers.query_parser import clear_query, extract_arxiv_ids, extract_names
 from scidock.search_engines.metadata import Metadata
-from scidock.search_engines.query_parser import clear_query, extract_arxiv_ids, extract_names
 from scidock.utils import dump_json, get_default_repository_path, load_json
 
 client = arxiv.Client()

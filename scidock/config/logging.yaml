@@ -18,6 +18,7 @@ handlers:
     level: DEBUG
     formatter: detailed
     filename: ~/.scidock/logs/scidock.log
+    encoding: utf-8
     maxBytes: 10_000_000
     backupCount: 3
   queue_handler:

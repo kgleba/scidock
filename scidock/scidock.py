@@ -14,11 +14,11 @@ from rapidfuzz import fuzz, process
 from rapidfuzz.utils import default_process
 
 from scidock.config import logger
+from scidock.parsers.web_parser import attempt_download
 from scidock.search_engines import arxiv_engine as arxiv
 from scidock.search_engines import crossref_engine as crossref
 from scidock.search_engines import scihub_engine as scihub
 from scidock.search_engines.metadata import Metadata
-from scidock.search_engines.web_parser import attempt_download
 from scidock.ui import progress_bar
 from scidock.utils import (
     dump_json,

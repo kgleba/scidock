@@ -44,5 +44,11 @@ SEARCH_TEST_CASES = [
 
     SearchTestCase('1609.05521v2', 1,
                    'Playing FPS Games with Deep Reinforcement Learning. DOI: 10.48550/arXiv.1609.05521v2',
-                   '1609.05521v2.Playing_FPS_Games_with_Deep_Reinforcement_Learning.pdf')
+                   '1609.05521v2.Playing_FPS_Games_with_Deep_Reinforcement_Learning.pdf'),
+
+    SearchTestCase('math', 64,
+                   'Cyclic b-Multiplicative (A|,|B)-Hardy–Rogers-Type Local Contraction '
+                   'and Related Results in b-Multiplicative and b-Metric Spaces. DOI: 10.1155/2020/2460702',
+                   '10.1155.2020.2460702.Cyclic__b_Multiplicative____A__B___Hardy–RogersType_Local_Contraction_and_Related_Results_in__b_Multiplicative'
+                   '_and__b_Metric_Spaces_Journal_of_Mathematics_2020_1–9.pdf')
 ]

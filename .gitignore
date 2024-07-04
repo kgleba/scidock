@@ -8,6 +8,7 @@ profiling/*
 
 scidock/__pycache__/*
 scidock/search_engines/__pycache__/*
+scidock/parsers/__pycache__/*
 scidock/config/__pycache__/*
 tests/__pycache__/*
 

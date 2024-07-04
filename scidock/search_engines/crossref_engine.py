@@ -8,7 +8,8 @@ import requests
 from crossref.restful import Etiquette, Works
 
 from scidock.config import logger
-from scidock.search_engines.query_parser import clear_query, extract_dois, extract_keywords, extract_names, simplify_query
+from scidock.parsers.mathml_parser import parse_document
+from scidock.parsers.query_parser import clear_query, extract_dois, extract_keywords, extract_names, simplify_query
 from scidock.utils import responsive_cache
 
 crossref.restful.requests = requests.Session()
@@ -56,13 +57,12 @@ def extract_metadata(paper: dict | None) -> CrossRefItem:
     if paper is None:
         paper = {}
 
-    if 'xmlns' in ''.join(paper.get('title', ())):
-        logger.warning(
-            'CrossRef responses might have MathML in metadata elements (such as title), which might lead to the parsing errors. '
-            'See: https://www.crossref.org/documentation/schema-library/markup-guide-metadata-segments/mathml. '
-            'I\'m aware of the issue and working on transforming it into the printable math format.')
+    title = ' / '.join(paper.get('title', ('UNTITLED',)))
 
-    return CrossRefItem(' / '.join(paper.get('title', ('UNTITLED',))), paper.get('DOI'), paper.get('score', 1000.0))
+    if 'xmlns' in title:
+        title = parse_document(title)
+
+    return CrossRefItem(title, paper.get('DOI'), paper.get('score', 1000.0))
 
 
 def search(query: str) -> tuple[int, Iterator[CrossRefItem]]:

@@ -1,5 +1,6 @@
 import json
 import random
+import re
 import string
 from dataclasses import asdict
 from functools import cache, wraps
@@ -15,6 +16,8 @@ from scidock.config import logger
 from scidock.search_engines.metadata import Metadata
 
 KB = 1024
+
+random.seed(42)
 
 
 def load_json(filename: str | PathLike) -> Any:
@@ -103,6 +106,9 @@ def save_file_to_repo(download_link: str, filename: str, doi: str, title: str, c
         logger.info(f'Download failed as Content-Type of the page is "{content_type}"')
         return False
 
+    filename = re.sub('_+', '_', filename)
+    filename = filename.replace('\r', '').replace('\n', '')
+
     with open(f'{repository_path}/{filename}', 'wb') as paper_file:
         for chunk in download_page.iter_content(chunk_size=10 * KB):
             paper_file.write(chunk)
@@ -119,7 +125,7 @@ def filename_from_metadata(doi: str, title: str) -> str:
     title = title.strip()
     remove_punctuation = str.maketrans('', '', string.punctuation)
     filename = title.translate(remove_punctuation).replace(' ', '_')
-    return '.'.join((doi.replace('/', '.'), filename, 'pdf'))
+    return '.'.join((doi, filename, 'pdf')).replace('/', '.')
 
 
 def random_chain(*iterables, weights: list[float] | None = None):
