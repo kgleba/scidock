@@ -36,11 +36,11 @@ SEARCH_TEST_CASES = [
 
     SearchTestCase('10.1016/j.ipm.2005.12.001', 1,
                    'Automatic extraction of titles from general documents using machine learning. DOI: 10.1016/j.ipm.2005.12.001',
-                   '10.1016.j.ipm.2005.12.001.Automatic_extraction_of_titles_from_general_documents_using_machine_learning_Information_Processing__Management_425_1276–1293.pdf'),
+                   '10.1016.j.ipm.2005.12.001.Automatic_extraction_of_titles_from_general_documents_using_machine_learning_Information_Processing_Management_425_1276–1293.pdf'),
 
     SearchTestCase('10.1016/j.ipm.2005.12.001', 666,
                    'Automatic extraction of titles from general documents using machine learning. DOI: 10.1016/j.ipm.2005.12.001',
-                   '10.1016.j.ipm.2005.12.001.Automatic_extraction_of_titles_from_general_documents_using_machine_learning_Information_Processing__Management_425_1276–1293.pdf'),
+                   '10.1016.j.ipm.2005.12.001.Automatic_extraction_of_titles_from_general_documents_using_machine_learning_Information_Processing_Management_425_1276–1293.pdf'),
 
     SearchTestCase('1609.05521v2', 1,
                    'Playing FPS Games with Deep Reinforcement Learning. DOI: 10.48550/arXiv.1609.05521v2',
