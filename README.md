@@ -1,7 +1,7 @@
 # SciDock
 
-![PyPI - Version](https://img.shields.io/pypi/v/scidock)
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/scidock)
+[![PyPI - Version](https://img.shields.io/pypi/v/scidock)](https://pypi.org/project/scidock)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/scidock)](https://pypi.org/project/scidock)
 [![Test with PyTest](https://github.com/kgleba/scidock/actions/workflows/test.yml/badge.svg)](https://github.com/kgleba/scidock/actions/workflows/test.yml)
 [![Lint with Ruff](https://github.com/kgleba/scidock/actions/workflows/lint.yml/badge.svg)](https://github.com/kgleba/scidock/actions/workflows/lint.yml)
 
