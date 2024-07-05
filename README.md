@@ -1,5 +1,10 @@
 # SciDock
 
+![PyPI - Version](https://img.shields.io/pypi/v/scidock)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/scidock)
+[![Test with PyTest](https://github.com/kgleba/scidock/actions/workflows/test.yml/badge.svg)](https://github.com/kgleba/scidock/actions/workflows/test.yml)
+[![Lint with Ruff](https://github.com/kgleba/scidock/actions/workflows/lint.yml/badge.svg)](https://github.com/kgleba/scidock/actions/workflows/lint.yml)
+
 SciDock is a CLI tool designed to provide a user-friendly interface for finding, downloading and managing scientific articles of your interest!  
 
 ## Installation
@@ -95,7 +100,7 @@ Aesthetically pleasing demos will also appear here soon :D
 
 ❌ [Google Scholar](https://scholar.google.com/) (yet)
 
-❌ [CyberLeninka](https://cyberleninka.ru/) (for queries in Russian)
+❌ [CyberLeninka](https://cyberleninka.ru/) (for Russian queries)
 
 ❌ [GeneralIndex](https://archive.org/details/GeneralIndex)
 
