@@ -95,6 +95,8 @@ Aesthetically pleasing demos will also appear here soon :D
 
 ❌ [Google Scholar](https://scholar.google.com/) (yet)
 
+❌ [CyberLeninka](https://cyberleninka.ru/) (for queries in Russian)
+
 ❌ [GeneralIndex](https://archive.org/details/GeneralIndex)
 
 ❌ Anna's Archive
