@@ -6,6 +6,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.3'
+      - name: Install project
+        run: pip install .
+      - name: Initialize the repository
+        run: scidock init ~/repo
+      - name: Install Hyperfine
+        run: |
+          wget https://github.com/sharkdp/hyperfine/releases/download/v1.18.0/hyperfine_1.18.0_amd64.deb
+          sudo dpkg -i hyperfine_1.18.0_amd64.deb
       - uses: bencherdev/bencher@main
       - name: Track base branch benchmarks with Bencher
         run: |
