@@ -1,5 +1,4 @@
 from collections.abc import Iterator
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pprint import pformat
 
@@ -65,39 +64,21 @@ def extract_metadata(paper: dict | None) -> CrossRefItem:
     return CrossRefItem(title, paper.get('DOI'), paper.get('score', 1000.0))
 
 
-def search(query: str) -> tuple[int, Iterator[CrossRefItem]]:
+def search(query: str) -> Iterator[CrossRefItem]:
     plain_query = simplify_query(query)
-
-    first_search_result = None
-    search_iter = iter([])
-    n_search_results = 0
+    search_query = iter(())
 
     if plain_query.strip():
         keywords, search_params = prepare_query_args(query)
         search_query = perform_query(*keywords, **search_params)
-        search_iter = iter(search_query)
 
-        logger.info('Launching concurrent requests')
-        with ThreadPoolExecutor() as pool:
-            count_future = pool.submit(search_query.count)
-            search_future = pool.submit(lambda iterator: next(iterator, None), search_iter)
+    dois = extract_dois(query)
+    for doi in dois:
+        paper = engine.doi(doi)
+        yield extract_metadata(paper)
 
-            n_search_results = count_future.result()
-            first_search_result = search_future.result()
+    for paper in search_query:
+        if None in (paper.get('title'), paper.get('DOI'), paper.get('score')):
+            logger.warning(f'Received the paper with an unusual metadata: {pformat(paper)}')
 
-    def retrieve_papers() -> Iterator[CrossRefItem]:
-        dois = extract_dois(query)
-        for doi in dois:
-            paper = engine.doi(doi)
-            yield extract_metadata(paper)
-
-        if first_search_result is not None:
-            yield extract_metadata(first_search_result)
-
-        for paper in search_iter:
-            if None in (paper.get('title'), paper.get('DOI'), paper.get('score')):
-                logger.warning(f'Received the paper with an unusual metadata: {pformat(paper)}')
-
-            yield extract_metadata(paper)
-
-    return n_search_results, next(iter(retrieve_papers, None))
+        yield extract_metadata(paper)

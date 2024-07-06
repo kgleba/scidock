@@ -2,8 +2,10 @@ import platform
 import re
 import subprocess
 from collections.abc import Iterator
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
 from ipaddress import IPv4Address, IPv6Address
+from itertools import chain
 from pathlib import Path
 from pprint import pformat
 
@@ -45,6 +47,11 @@ def update_recent_searches(paper: str):
     dump_json(repository_content, content_path)
 
 
+def precalculate_lazy_iterator(iterator: Iterator) -> Iterator:
+    first_element = next(iterator, None)
+    return chain((first_element,), iterator)
+
+
 def split_search_results(query: str, arxiv_results: Iterator, search_results: Iterator) -> tuple[list, Iterator]:
     # approach of defining the cutoff value for CrossRef relevance scores
     search_prefix = []
@@ -52,12 +59,20 @@ def split_search_results(query: str, arxiv_results: Iterator, search_results: It
     prefix_max = -1
     previous_score = 0
 
+    progress_bar.update('Searching the CrossRef database...')
+
     arxiv_ids = arxiv.extract_arxiv_ids(query)
 
     if arxiv_ids:
         search_prefix += list(map(str, arxiv_results))
-    arxiv_results = iter(arxiv_results)
-    first_arxiv_result = str(next(arxiv_results, ''))
+
+    with ThreadPoolExecutor() as pool:
+        arxiv_future = pool.submit(precalculate_lazy_iterator, arxiv_results)
+        search_future = pool.submit(precalculate_lazy_iterator, search_results)
+
+        arxiv_results = arxiv_future.result()
+        progress_bar.update('Searching through the arXiv preprints...')
+        search_results = search_future.result()
 
     for search_result in search_results:
         search_prefix.append(str(search_result))
@@ -68,7 +83,7 @@ def split_search_results(query: str, arxiv_results: Iterator, search_results: It
             best_score_ratio = prefix_score_ratios.index(max(prefix_score_ratios[1:]))
             insert_point = best_score_ratio + 2
             search_prefix.insert(insert_point, questionary.Separator())
-            search_prefix[insert_point:insert_point] = [first_arxiv_result] + [str(next(arxiv_results, '')) for _ in range(4)]
+            search_prefix[insert_point:insert_point] = [str(next(arxiv_results, '')) for _ in range(5)]
             search_prefix = list(filter(lambda result: result, search_prefix))
 
             break
@@ -180,7 +195,7 @@ def download(query: str, proxies: dict[str, str] | None) -> bool:
     return False
 
 
-def search(query: str, proxy: bool, extended: bool):
+def search(query: str, proxy: bool, extended: bool, not_interactive: bool):
     # Suggested Workflow
     # Users get suggestions based on the relevance score provided by CrossRef
     # They are also provided with the option to open a pager (like GNU less) and scroll through more data generated on the fly
@@ -192,24 +207,22 @@ def search(query: str, proxy: bool, extended: bool):
         proxies = get_current_proxy_setting()
 
     progress_bar.start()
-    progress_bar.update('Searching the CrossRef database...')
 
-    n_search_results, search_results = crossref.search(query)
-    logger.info(f'Number of search results for {query = !r}: {n_search_results:,}')
-
-    progress_bar.update('Searching through the arXiv preprints...')
+    search_results = crossref.search(query)
 
     arxiv_results = arxiv.search(query, extended)
     search_prefix, search_results = split_search_results(query, arxiv_results, search_results)
 
     progress_bar.stop()
 
+    desired_paper = None
     try:
-        # noinspection PyTypeChecker
-        # signature changes at a runtime, see `ui.IterativeInquirerControl`
-        desired_paper = questionary.select(message='Choose the suitable paper to add to your library',
-                                           choices=(search_prefix, search_results),
-                                           pointer='\u276f').ask()
+        if not not_interactive:
+            # noinspection PyTypeChecker
+            # signature changes at a runtime, see `ui.IterativeInquirerControl`
+            desired_paper = questionary.select(message='Choose the suitable paper to add to your library',
+                                               choices=(search_prefix, search_results),
+                                               pointer='\u276f').ask()
     except ValueError as e:
         if str(e) == 'No choices provided':
             click.echo('Nothing found! :(')
@@ -289,9 +302,11 @@ def init_command(repository_path: Path, name: str | None):
 @click.option('--proxy', is_flag=True, default=False, help='Whether to use a proxy in subsequent download requests')
 @click.option('--extended', is_flag=True, default=False,
               help='Whether to include abstract and other fields in the search. Defaults to False (search by title only)')
+@click.option('-n', '--not-interactive', is_flag=True, default=False, hidden=True,
+              help='Disable user interactions (for CI/CD use only)')
 @require_initialized_repository
-def search_command(query: str, proxy: bool, extended: bool):
-    search(query, proxy, extended)
+def search_command(query: str, proxy: bool, extended: bool, not_interactive: bool):
+    search(query, proxy, extended, not_interactive)
 
 
 @click.command('download')

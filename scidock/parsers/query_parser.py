@@ -20,10 +20,12 @@ STRICT_ARXIV_PATTERN = re.compile(fr'arXiv\.{ARXIV_PATTERN.pattern}')
 remote_data = {}
 
 
+@responsive_cache
 def _retrieve_remote_data(query: str, operation: str) -> Any:
     # updates relevant info about the `query` itself and `clear_query(query)`
     if remote_data.get(query) is None:
-        progress_bar.update('Parsing your query using AI...')
+        if progress_bar.status != 'Parsing your query using AI...':
+            progress_bar.update('Parsing your query using AI...')
 
         response = requests.post(f'{NLP_SERVER}/complex_analysis', json={'query': query}, timeout=10)
         remote_data.update(response.json())
