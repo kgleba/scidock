@@ -1,0 +1,20 @@
+name: Benchmark with Hyperfine and Bencher
+on: push
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: bencherdev/bencher@main
+      - name: Track base branch benchmarks with Bencher
+        run: |
+          bencher run \
+          --project scidock \
+          --token '${{ secrets.BENCHER_API_TOKEN }}' \
+          --branch main \
+          --testbed ubuntu-latest \
+          --adapter shell_hyperfine \
+          --file results.json \
+          --err \
+          hyperfine --export-json results.json --warmup 2 "scidock search -n 'deep learning for symbolic calculations'"
