@@ -37,3 +37,14 @@ def test_search_tui(test_case: SearchTestCase):
     assert ('Successfully downloaded the paper!' in response or
             'A downloadable version of this work could not be found automatically :(' in response)
     assert f'Choose the suitable paper to add to your library {expected_title}' in response
+
+
+def test_nonsensical_inputs():
+    query = 'abacabadabacaba'
+
+    process = pexpect.spawn(f'scidock search "{query}"')
+    process.expect(pexpect.EOF)
+
+    response = process.before.decode()
+
+    assert 'Nothing found! :(' in response

@@ -49,6 +49,8 @@ def update_recent_searches(paper: str):
 
 def precalculate_lazy_iterator(iterator: Iterator) -> Iterator:
     first_element = next(iterator, None)
+    if first_element is None:
+        return iterator
     return chain((first_element,), iterator)
 
 
