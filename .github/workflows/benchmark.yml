@@ -1,5 +1,9 @@
 name: Benchmark with Hyperfine and Bencher
-on: push
+on:
+  push:
+    branches:
+      - 'main'
+  workflow_dispatch:
 
 jobs:
   benchmark:
@@ -8,7 +12,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12.3'
+          python-version: '3.12'
       - name: Install project
         run: pip install .
       - name: Initialize the repository

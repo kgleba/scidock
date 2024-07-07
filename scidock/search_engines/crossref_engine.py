@@ -26,7 +26,7 @@ class CrossRefItem:
     relevance_score: float = 1000.0
 
     def __str__(self):
-        return f'{self.title.rstrip('.')}. DOI: {self.DOI}'
+        return f'{self.title.rstrip(".")}. DOI: {self.DOI}'
 
 
 @responsive_cache

@@ -50,13 +50,15 @@ def parse_scidb(soup: BeautifulSoup, doi: str) -> tuple[str | None, str | None, 
 def download(doi: str, proxies: dict[str, str] | None = None) -> bool:
     if proxies is None:
         proxies = {}
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.3'}
     logger.info(f'Attempting to download a file with DOI = {doi} and proxy configuration: {proxies}')
 
     for mirror in SCIHUB_MIRRORS + SCIDB_MIRRORS:
         try:
             # TODO: choose a sensible timeout based on the Internet speed
             timeout = 5 if proxies else 2
-            preview_page = requests.get(f'{mirror}/{doi}', proxies=proxies, timeout=timeout, allow_redirects=False)
+            preview_page = requests.get(f'{mirror}/{doi}', proxies=proxies, timeout=timeout, headers=headers, allow_redirects=False)
             break
         except requests.exceptions.Timeout:
             logger.debug(f'Timeout for the {mirror} Sci-Hub mirror')

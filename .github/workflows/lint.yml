@@ -1,5 +1,10 @@
 name: Lint with Ruff
-on: [ push, pull_request ]
+on:
+  push:
+    paths:
+      - '**.py'
+  pull_request:
+  workflow_dispatch:
 
 jobs:
   lint:
@@ -8,7 +13,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12.3'
+          python-version: '3.12'
       - name: Lint with Ruff
         run: |
           pip install ruff

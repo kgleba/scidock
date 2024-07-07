@@ -127,7 +127,6 @@ def init(repository_path: Path, name: str | None = None):
         click.echo('Repository in this directory is already initialized!', err=True)
         return
 
-    scidock_repo_root.mkdir(parents=True)
     scidock_root.mkdir(exist_ok=True)
 
     current_config = load_json(scidock_root / 'config.json')
@@ -136,6 +135,8 @@ def init(repository_path: Path, name: str | None = None):
         current_config['repositories'] = {}
 
     current_config['repositories'] = remove_outdated_repos(current_config['repositories'])
+
+    scidock_repo_root.mkdir(parents=True)
 
     if name is not None:
         new_repository_name = name

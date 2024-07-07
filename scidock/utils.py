@@ -159,7 +159,7 @@ def responsive_cache(func):
         func_return = func(*args, **kwargs)
         func_args = ', '.join((format_args(args), format_kwargs(kwargs)))
 
-        logger.debug(f'Cache for {func.__name__}({func_args}) {'hit' if func.cache_info().hits > hits else 'missed'}')
+        logger.debug(f'Cache for {func.__name__}({func_args}) {"hit" if func.cache_info().hits > hits else "missed"}')
 
         return func_return
 

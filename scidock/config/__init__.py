@@ -1,29 +1,44 @@
-import atexit
+import inspect
 import logging
-import logging.config
+import sys
 from functools import cache
 from pathlib import Path
 
-import yaml
+from loguru import logger
 
 __all__ = ('logger',)
 
-logger = logging.getLogger('scidock')
 Path('~/.scidock/logs').expanduser().mkdir(parents=True, exist_ok=True)
+
+
+# source: https://loguru.readthedocs.io/en/stable/overview.html#entirely-compatible-with-standard-logging
+class InterceptHandler(logging.Handler):
+    def emit(self, record: logging.LogRecord) -> None:
+        # Get corresponding Loguru level if it exists.
+        level: str | int
+        try:
+            level = logger.level(record.levelname).name
+        except ValueError:
+            level = record.levelno
+
+        # Find caller from where originated the logged message.
+        frame, depth = inspect.currentframe(), 0
+        while frame and (depth == 0 or frame.f_code.co_filename == logging.__file__):
+            frame = frame.f_back
+            depth += 1
+
+        logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
 
 
 @cache  # ensure that the function gets called only once
 def setup_logging():
-    with open(Path(__file__).parent / 'logging.yaml') as config_file:
-        log_config = yaml.load(config_file, Loader=yaml.SafeLoader)
+    logger.remove()
+    logger.add(sys.stderr, level='WARNING', format='<level>{level}: {message}</level>')
+    logger.add(Path('~/.scidock/logs/scidock.log').expanduser(), level='DEBUG',
+               format='[{level}|{module}|L{line}] {time:DD.MM.YYYY HH:mm:ss}: {message}',
+               rotation='10 MB', enqueue=True)
 
-    log_config['handlers']['file']['filename'] = str(Path(log_config['handlers']['file']['filename']).expanduser().absolute())
-
-    logging.config.dictConfig(log_config)
-    queue_handler = logging.getHandlerByName('queue_handler')
-    if queue_handler is not None:
-        queue_handler.listener.start()
-        atexit.register(queue_handler.listener.stop)
+    logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
 
 
 setup_logging()

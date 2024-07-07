@@ -23,7 +23,7 @@ class ArXivItem:
         self.DOI = f'10.48550/arXiv.{self.arxiv_id}'
 
     def __str__(self):
-        return f'{self.title.rstrip('.')}. DOI: {self.DOI}'
+        return f'{self.title.rstrip(".")}. DOI: {self.DOI}'
 
 
 def search(query: str, extended: bool = False) -> Iterator[ArXivItem]:

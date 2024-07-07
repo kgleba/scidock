@@ -1,14 +1,33 @@
 name: Test with PyTest
-on: [ push, pull_request ]
+on:
+  push:
+    paths:
+      - '**.py'
+      - '**.yml'
+      - '**.yaml'
+      - '**.toml'
+  pull_request:
+  workflow_dispatch:
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python_version: [ '3.10.14', '3.11.9', '3.12.3', '3.13.0-beta.3' ]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12.3'
+          python-version: ${{ matrix.python_version }}
+      - uses: actions/cache@v4
+        id: cache-pyproject-deps
+        with:
+          path: ~/.cache/pip
+          key: ubuntu-latest-${{ matrix.python_version }}-pip-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ubuntu-latest-${{ matrix.python_version }}-pip-
       - name: Install project
         run: pip install .
       - name: Setup the test environment

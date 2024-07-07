@@ -7,7 +7,7 @@ from rich.status import Status
 
 __all__ = ('progress_bar',)
 
-type ChoiceSequence = Sequence[str | Choice | dict[str, Any]]
+ChoiceSequence = Sequence[str | Choice | dict[str, Any]]
 
 
 class IterativeInquirerControl(InquirerControl):
