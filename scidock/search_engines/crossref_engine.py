@@ -78,7 +78,7 @@ def search(query: str) -> Iterator[CrossRefItem]:
         yield extract_metadata(paper)
 
     for paper in search_query:
-        if None in (paper.get('title'), paper.get('DOI'), paper.get('score')):
+        if None in (paper.get('DOI'), paper.get('score')):
             logger.warning(f'Received the paper with an unusual metadata: {pformat(paper)}')
 
         yield extract_metadata(paper)

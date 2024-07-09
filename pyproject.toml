@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "scidock"
-version = "0.1.2"
+version = "0.1.3"
 description = "CLI interface for finding, downloading and managing scientific articles"
 authors = ["kgleba <kgleba@yandex.ru>"]
 readme = "README.md"

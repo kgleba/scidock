@@ -21,8 +21,6 @@ If you don't want to install pipx, you can just run:
 pip install scidock
 ```
 
-Note: you must have Python 3.12+ installed!
-
 If you want to install the application manually or plan to contribute to the project, consider the "development installation" option (see next section). Otherwise, skip it without a second thought.
 
 ### Development installation
