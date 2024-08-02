@@ -1,17 +1,10 @@
+# JetBrains
 .idea/*
-.ruff_cache/*
-.pytest_cache/*
+server/nlp/.idea/*
+server/web/.idea/*
 
-scidock-nlp
-scidock-nlp/*
-profiling/*
-
-scidock/__pycache__/*
-scidock/search_engines/__pycache__/*
-scidock/parsers/__pycache__/*
-scidock/config/__pycache__/*
-tests/__pycache__/*
-
-dist/*
-
-Dockerfile
+# __pycache__ of submodules
+server/web/web/__pycache__/*
+server/web/web/connectors/__pycache__/*
+server/web/web/log/__pycache__/*
+server/web/web/parsers/__pycache__/*

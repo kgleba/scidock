@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "web"
+version = "1.0.0"
+description = ""
+authors = ["kgleba <kgleba@yandex.ru>"]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "^0.111.1"
+aiohttp = {extras = ["speedups"], version = "^3.9.5"}
+loguru = "^0.7.2"
+aiohttp-client-cache = "^0.11.0"
+defusedxml = "^0.7.1"
+feedparser = "^6.0.11"
+fake-useragent = "^1.5.1"
+beautifulsoup4 = "^4.12.3"
+async-lru = "^2.0.4"
+sse-starlette = "^2.1.2"
+uvicorn = "^0.30.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

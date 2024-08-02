@@ -8,7 +8,7 @@ from loguru import logger
 
 __all__ = ('logger',)
 
-Path('~/.scidock/logs').expanduser().mkdir(parents=True, exist_ok=True)
+Path('logs').mkdir(parents=True, exist_ok=True)
 
 
 # source: https://loguru.readthedocs.io/en/stable/overview.html#entirely-compatible-with-standard-logging
@@ -34,7 +34,7 @@ class InterceptHandler(logging.Handler):
 def setup_logging():
     logger.remove()
     logger.add(sys.stderr, level='WARNING', format='<level>{level}: {message}</level>')
-    logger.add(Path('~/.scidock/logs/scidock.log').expanduser(), level='DEBUG',
+    logger.add(Path('logs/scidock.log'), level='DEBUG',
                format='[{level}|{module}|L{line}] {time:DD.MM.YYYY HH:mm:ss}: {message}',
                rotation='10 MB', enqueue=True)
 

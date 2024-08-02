@@ -1,0 +1,11 @@
+services:
+  nlp:
+    build:
+      context: nlp
+      dockerfile: light.Dockerfile
+    expose:
+      - '7234'
+  web:
+    build: web
+    ports:
+      - '8080:5000'
