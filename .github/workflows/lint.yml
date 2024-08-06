@@ -3,6 +3,9 @@ on:
   push:
     paths:
       - '**.py'
+      - '**.yml'
+      - '**.yaml'
+      - '**.toml'
   pull_request:
   workflow_dispatch:
 
