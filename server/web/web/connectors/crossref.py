@@ -8,11 +8,17 @@ import aiohttp
 from web.log import logger
 from web.parsers.mathml import parse_document
 from web.parsers.metadata import SearchMeta
-from web.parsers.query import clear_query, extract_dois, extract_keywords, extract_names, remove_stop_words
+from web.parsers.query import (
+    clear_query,
+    extract_dois,
+    extract_keywords,
+    extract_names,
+    remove_stop_words,
+)
 
 __all__ = ('search',)
 
-PAGE_SIZE = 100
+PAGE_SIZE = 50
 DATA_LIMIT = 100
 
 CROSSREF_URL = 'https://api.crossref.org/works'
@@ -22,14 +28,21 @@ def make_etiquette(tool: str, version: str, project_link: str, mailto: str) -> s
     return f'{tool}/{version} ({project_link};mailto:{mailto})'
 
 
-ETIQUETTE = make_etiquette('SciDock', '1.0', 'https://github.com/kgleba/scidock',
-                           'kgleba@yandex.ru')
+ETIQUETTE = make_etiquette(
+    'SciDock', '1.0', 'https://github.com/kgleba/scidock', 'kgleba@yandex.ru'
+)
 
 
 async def _perform_query(url: str, parameters: dict[str, str]) -> list[dict]:
+    logger.info(f'Performing CrossRef search query with {parameters = }')
+
     async with aiohttp.ClientSession() as session:  # noqa: SIM117
-        async with session.get(url, params=parameters,
-                               headers={'User-Agent': ETIQUETTE}) as response:
+        async with session.get(
+                url, params=parameters, headers={'User-Agent': ETIQUETTE}
+        ) as response:
+            if response.headers.get('x-api-pool') != 'polite':
+                logger.warning('CrossRef requests currently do not use polite pool!')
+
             if response.status == 404:  # noqa: PLR2004 - 404 as a status code is obvious
                 return []
 
@@ -53,12 +66,14 @@ def _extract_metadata(paper: dict) -> SearchMeta:
             download_link = related_link['URL']
             break
 
-    return SearchMeta(title=title,
-                      DOI=paper.get('DOI'),
-                      authors=authors,
-                      abstract=paper.get('abstract', ''),
-                      download_link=download_link,
-                      relevance_score=paper.get('score', 1000.0))
+    return SearchMeta(
+        title=title,
+        DOI=paper.get('DOI'),
+        authors=authors,
+        abstract=paper.get('abstract', ''),
+        download_link=download_link,
+        relevance_score=paper.get('score', 1000.0),
+    )
 
 
 async def search(query: str, extended: bool = False) -> list[SearchMeta]:
@@ -95,13 +110,15 @@ async def search(query: str, extended: bool = False) -> list[SearchMeta]:
     doi_requests = list(map(itemgetter('message'), doi_requests))
     crossref_results += doi_requests
 
+    logger.info(f'Got works by the direct DOIs = {doi_requests!r}')
+
     if search_params:
         search_params.update({'sort': 'score', 'order': 'desc'})
 
         crossref_pages = []
         for page_n in range(ceil(DATA_LIMIT / PAGE_SIZE)):
             search_params.update({'rows': PAGE_SIZE, 'offset': PAGE_SIZE * page_n})
-            crossref_pages.append(_perform_query(CROSSREF_URL, search_params))
+            crossref_pages.append(_perform_query(CROSSREF_URL, search_params.copy()))
 
         crossref_pages = await asyncio.gather(*crossref_pages)
         crossref_pages = list(map(itemgetter('message'), crossref_pages))
@@ -112,13 +129,3 @@ async def search(query: str, extended: bool = False) -> list[SearchMeta]:
     crossref_results = list(map(_extract_metadata, crossref_results))
 
     return crossref_results
-
-
-async def main():
-    logger.error(await search('meow 10.1088/1757-899X/330/1/012064'))
-    logger.error(await search(
-        'Assessment of Process Capability: the case of Soft Drinks Processing Unit by Kottala Sri Yogi'))
-
-
-if __name__ == '__main__':
-    asyncio.run(main())

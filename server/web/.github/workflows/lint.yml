@@ -1,0 +1,22 @@
+name: Lint with Ruff
+on:
+  push:
+    paths:
+      - '**.py'
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Setup Ruff
+        run: pip install ruff
+      - name: Lint with Ruff
+        run: ruff check .
+      - name: Check format with Ruff
+        run: ruff format --diff

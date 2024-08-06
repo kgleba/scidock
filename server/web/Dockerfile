@@ -1,12 +1,17 @@
-FROM python:3.12-slim-bookworm
+FROM python:3.12-slim-bookworm AS build
 
-WORKDIR /app
 COPY . .
 
 RUN pip install uv && uv venv --seed
-RUN uv pip install .
+RUN uv pip install -r requirements.lock
+
+FROM python:3.12-slim-bookworm
+
+WORKDIR /app
+COPY --from=build /.venv .venv
+COPY . .
 
 ENV PATH="/app/.venv/bin:$PATH"
 
 EXPOSE 5000
-CMD uvicorn web.main:app --host 0.0.0.0 --port 5000 --workers 4
+CMD python -m uvicorn web.main:app --host 0.0.0.0 --port 5000 --workers 4

@@ -1,6 +1,6 @@
 from aiohttp_client_cache import CacheBackend, CachedSession
 
-__all__ = ('extract_names', 'extract_keywords', 'remove_stop_words')
+__all__ = ('extract_names', 'extract_keywords', 'remove_stop_words', 'get_edition')
 
 NLP_URL = 'http://nlp:7234'
 
@@ -22,4 +22,10 @@ async def extract_keywords(query: str) -> list[str]:
 async def remove_stop_words(query: str) -> str:
     async with CachedSession(cache=cache) as session:  # noqa: SIM117
         async with session.post(f'{NLP_URL}/remove_stop_words', json={'query': query}) as response:
+            return await response.json()
+
+
+async def get_edition() -> dict[str, str]:
+    async with CachedSession(cache=cache) as session:  # noqa: SIM117
+        async with session.get(f'{NLP_URL}/edition') as response:
             return await response.json()

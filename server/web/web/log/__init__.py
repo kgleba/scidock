@@ -34,9 +34,13 @@ class InterceptHandler(logging.Handler):
 def setup_logging():
     logger.remove()
     logger.add(sys.stderr, level='WARNING', format='<level>{level}: {message}</level>')
-    logger.add(Path('logs/scidock.log'), level='DEBUG',
-               format='[{level}|{module}|L{line}] {time:DD.MM.YYYY HH:mm:ss}: {message}',
-               rotation='10 MB', enqueue=True)
+    logger.add(
+        Path('logs/scidock.log'),
+        level='DEBUG',
+        format='[{level}|{module}|L{line}] {time:DD.MM.YYYY HH:mm:ss}: {message}',
+        rotation='10 MB',
+        enqueue=True,
+    )
 
     logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
 

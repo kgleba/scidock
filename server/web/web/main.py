@@ -1,4 +1,5 @@
 import asyncio
+import json
 from collections.abc import Iterator
 from contextlib import asynccontextmanager
 from functools import partial
@@ -26,8 +27,9 @@ app = FastAPI(lifespan=lifespan)
 PAGE_SIZE = 20
 
 
-def _merge_search_results(query: str, crossref_results: list[SearchMeta],
-                          arxiv_results: list[SearchMeta]) -> list[SearchMeta]:
+def _merge_search_results(
+    query: str, crossref_results: list[SearchMeta], arxiv_results: list[SearchMeta]
+) -> list[SearchMeta]:
     # approach of defining the cutoff value for CrossRef relevance scores
     search_prefix = []
     prefix_score_ratios = []
@@ -53,13 +55,15 @@ def _merge_search_results(query: str, crossref_results: list[SearchMeta],
             best_score_ratio = prefix_score_ratios.index(max(prefix_score_ratios[1:]))
             insert_point = best_score_ratio + 2
             search_prefix[insert_point:insert_point] = arxiv_results[
-                                                       arxiv_pointer:arxiv_pointer + 5]
+                arxiv_pointer : arxiv_pointer + 5
+            ]
             arxiv_pointer += 5
 
             break
 
     return search_prefix + list(
-        random_chain(crossref_results[crossref_pointer:], arxiv_results[arxiv_pointer:]))
+        random_chain(crossref_results[crossref_pointer:], arxiv_results[arxiv_pointer:])
+    )
 
 
 async def _get_download_link(search_result: SearchMeta, session: aiohttp.ClientSession) -> LinkMeta:
@@ -74,8 +78,9 @@ async def _get_download_link(search_result: SearchMeta, session: aiohttp.ClientS
     return publishers_result
 
 
-async def generate_results_with_links(search_results: list[SearchMeta],
-                                      include_abstract: bool) -> Iterator[list[dict]]:
+async def generate_results_with_links(
+    search_results: list[SearchMeta], include_abstract: bool
+) -> Iterator[list[dict]]:
     links_retrieved = 0
 
     for results_page in batched(search_results, PAGE_SIZE):
@@ -85,24 +90,31 @@ async def generate_results_with_links(search_results: list[SearchMeta],
 
             links_retrieved += len([link for link in page_links if link != EmptyLinkMeta])
 
-            results_links = [merge_result_link(result, link, include_abstract)
-                             for result, link in zip(results_page, page_links, strict=True)]
+            results_links = [
+                merge_result_link(result, link, include_abstract)
+                for result, link in zip(results_page, page_links, strict=True)
+            ]
 
-            yield results_links
+            yield json.dumps(results_links)
 
     logger.info(
         f'Retrieved {links_retrieved} links for {len(search_results)} search results. '
-        f'Ratio: {round(links_retrieved / len(search_results), 3)}')
+        f'Ratio: {round(links_retrieved / len(search_results), 3)}'
+    )
 
 
 @app.get('/search')
-async def search(query: str, extended: bool = False, attempt_download: bool = True,
-                 include_abstract: bool = False):
-    logger.info(
-        f'Got search request with {extended = } {query = !r} and {attempt_download = }')
+async def search(
+    query: str,
+    extended: bool = False,
+    attempt_download: bool = True,
+    include_abstract: bool = False,
+):
+    logger.info(f'Got search request with {extended = } {query = !r} and {attempt_download = }')
 
-    crossref_results, arxiv_results = await asyncio.gather(crossref.search(query, extended),
-                                                           arxiv.search(query, extended))
+    crossref_results, arxiv_results = await asyncio.gather(
+        crossref.search(query, extended), arxiv.search(query, extended)
+    )
     search_results = _merge_search_results(query, crossref_results, arxiv_results)
 
     if attempt_download:

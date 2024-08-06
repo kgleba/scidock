@@ -14,7 +14,7 @@ FROM python:3.12-slim-bookworm
 WORKDIR /app
 COPY --from=build /.venv .venv
 COPY --from=build /all-MiniLM-L6-v2 all-MiniLM-L6-v2
-COPY light .
+COPY tiny .
 
 ENV PATH="/app/.venv/bin:$PATH"
 RUN python -m spacy download en_core_web_sm && rm -rf /root/.cache/pip

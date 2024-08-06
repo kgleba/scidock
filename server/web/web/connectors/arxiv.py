@@ -30,8 +30,9 @@ async def _perform_query(url: str, parameters: dict[str, str | int]) -> str:
 
     async with aiohttp.ClientSession() as session:
         while attempts < MAX_RETRIES and (not result_xml or not check_content_presence(result_xml)):
-            async with session.get(url, params=parameters,
-                                   headers={'User-Agent': UA.random}) as response:
+            async with session.get(
+                url, params=parameters, headers={'User-Agent': UA.random}
+            ) as response:
                 result_xml = await response.text()
 
             attempts += 1
@@ -66,24 +67,20 @@ async def search(query: str, extended: bool = False) -> list[SearchMeta]:
 
     arxiv_pages = []
     for page_n in range(ceil(DATA_LIMIT / PAGE_SIZE)):
-        arxiv_pages.append(_perform_query(ARXIV_URL,
-                                          {'search_query': search_query,
-                                           'start': PAGE_SIZE * page_n,
-                                           'max_results': PAGE_SIZE,
-                                           'sortBy': 'relevance',
-                                           'sortOrder': 'descending'}))
+        arxiv_pages.append(
+            _perform_query(
+                ARXIV_URL,
+                {
+                    'search_query': search_query,
+                    'start': PAGE_SIZE * page_n,
+                    'max_results': PAGE_SIZE,
+                    'sortBy': 'relevance',
+                    'sortOrder': 'descending',
+                },
+            )
+        )
 
     arxiv_results = await asyncio.gather(*arxiv_pages)
     arxiv_results = reduce(add, list(map(extract_metadata, arxiv_results)))
 
     return arxiv_results
-
-
-async def main():
-    search_res = await search('deep learning for symbolic computations')
-    print(len(search_res))
-    print(search_res[:10])
-
-
-if __name__ == '__main__':
-    asyncio.run(main())

@@ -1,6 +1,7 @@
 import asyncio
 
 import aiohttp
+import requests
 from async_lru import alru_cache
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
@@ -23,10 +24,12 @@ async def establish_mirror() -> str | None:
     async with aiohttp.ClientSession() as session:
         mirror_ping = [
             session.get(f'{mirror}/{sample_doi}', headers={'User-Agent': UA.random}, timeout=4)
-            for mirror in SCIDB_MIRRORS + SCIHUB_MIRRORS]
+            for mirror in SCIDB_MIRRORS + SCIHUB_MIRRORS
+        ]
 
         ping_results: tuple[aiohttp.ClientResponse | BaseException] = await asyncio.gather(
-            *mirror_ping, return_exceptions=True)
+            *mirror_ping, return_exceptions=True
+        )
 
         mirror = None
         for ping_result in ping_results:
@@ -45,7 +48,8 @@ async def establish_mirror() -> str | None:
 
         if mirror is None:
             mirror_conn_error = RuntimeError(
-                'Could not establish connection with any of the Sci-Hub/SciDB mirrors! Try using a proxy')
+                'Could not establish connection with any of the Sci-Hub/SciDB mirrors! Try using a proxy'
+            )
             logger.opt(exception=mirror_conn_error).critical(str(mirror_conn_error))
             raise mirror_conn_error
 
@@ -56,13 +60,16 @@ async def establish_mirror() -> str | None:
 
 def _parse_scihub(soup: BeautifulSoup, mirror: str) -> LinkMeta:
     download_button = soup.find('button')
-    if not download_button:
-        logger.info(f'Did not find the download button in the Sci-Hub {mirror = } (document not found)')
+    if download_button is None:
+        logger.info(
+            f'Did not find the download button in the Sci-Hub {mirror = } (document not found)'
+        )
         return EmptyLinkMeta
 
     if download_button.get('onclick') is None:
         logger.error(
-            'Download button does not have an "onclick" attribute (Sci-Hub DOM structure has changed)!')
+            'Download button does not have an "onclick" attribute (Sci-Hub DOM structure has changed)!'
+        )
         return EmptyLinkMeta
 
     redirect_code = download_button['onclick']
@@ -73,8 +80,10 @@ def _parse_scihub(soup: BeautifulSoup, mirror: str) -> LinkMeta:
 
 
 def _parse_scidb(soup: BeautifulSoup, mirror: str) -> LinkMeta:
-    download_button = soup.find('a', string='Download')
-    if not download_button:
+    download_button = soup.find('a', string='Download') or soup.find(
+        'a', string='Sci-Hub'
+    )  # SciDB supports Sci-Hub as a source
+    if download_button is None:
         logger.warning(f'Did not find the download button in the Sci-DB {mirror = }')
         return EmptyLinkMeta
 
@@ -83,29 +92,34 @@ def _parse_scidb(soup: BeautifulSoup, mirror: str) -> LinkMeta:
     return LinkMeta(download_link, guarantee=True)
 
 
-HOST_MAPPING = ({URL(mirror).host: _parse_scihub for mirror in SCIHUB_MIRRORS} |
-                {URL(mirror).host: _parse_scidb for mirror in SCIDB_MIRRORS})
+HOST_MAPPING = {URL(mirror).host: _parse_scihub for mirror in SCIHUB_MIRRORS} | {
+    URL(mirror).host: _parse_scidb for mirror in SCIDB_MIRRORS
+}
 
 
 async def get_download_link(doi: str) -> LinkMeta:
     if not doi.strip():
         return EmptyLinkMeta
 
+    doi = doi.strip().lower()
+
     logger.info(f'Attempting to find a file with DOI = {doi} in Sci-Hub DB')
     mirror = await establish_mirror()
 
+    # `aiohttp` cannot be used with Sci-DB as `await preview_page.text()` tries to load the entire page,
+    # with embedded PDF - which may not happen at all if the resource is blocked in the region
+    # (or happen with a noticeable delay)
+    # anyway, we get the same blocking call using `requests` (which correctly handles the behavior described above)
     try:
-        async with asyncio.timeout(4):
-            async with aiohttp.ClientSession() as session:
-                preview_page = await session.get(f'{mirror}/{doi}',
-                                                 headers={'User-Agent': UA.random},
-                                                 allow_redirects=False)
-    except TimeoutError:
+        preview_page = requests.get(
+            f'{mirror}/{doi}', headers={'User-Agent': UA.random}, allow_redirects=False, timeout=4
+        )
+    except requests.Timeout:
         logger.warning(f'{mirror}/{doi} timed out')
         return EmptyLinkMeta
 
-    mirror = preview_page.url.host
-    soup = BeautifulSoup(await preview_page.text(), 'html.parser')
+    mirror = URL(preview_page.url).host
+    soup = BeautifulSoup(preview_page.text, 'html.parser')
 
     parse_function = HOST_MAPPING.get(mirror)
     if parse_function is not None:
@@ -113,8 +127,3 @@ async def get_download_link(doi: str) -> LinkMeta:
 
     logger.warning(f'Unknown Sci-Hub/SciDB {mirror = }')
     return EmptyLinkMeta
-
-
-if __name__ == '__main__':
-    ...
-    # logger.info(asyncio.run(get_download_link('10.1108/14684520810866010')))

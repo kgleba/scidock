@@ -2,14 +2,14 @@ exclude = [
     ".git",
 ]
 
-line-length = 140
+line-length = 100
 indent-width = 4
 
 target-version = "py312"
 
 [lint]
 select = ["B", "C", "E", "W", "F", "I", "N", "S", "UP", "A", "ISC", "ICN", "G", "RET", "SIM", "TID", "PTH", "PL", "RSE", "RUF", "ERA", "PT", "LOG"]
-ignore = ["PTH123", "S311", "ERA001", "RET504"]
+ignore = ["S311", "RET504", "ISC001", "E501"]
 
 # Allow fix for all enabled rules (when `--fix`) is provided.
 fixable = ["ALL"]
@@ -20,3 +20,6 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
 [lint.pylint]
 max-returns = 7
+
+[format]
+quote-style = "single"

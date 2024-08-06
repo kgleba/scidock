@@ -5,6 +5,8 @@ from web.log import logger
 
 __all__ = ('responsive_cache', 'random_chain')
 
+random.seed(42)
+
 
 def responsive_cache(func):  # for synchronous functions only!
     func = cache(func)
@@ -22,7 +24,8 @@ def responsive_cache(func):  # for synchronous functions only!
         func_args = ', '.join((format_args(args), format_kwargs(kwargs)))
 
         logger.debug(
-            f'Cache for {func.__name__}({func_args}) {'hit' if func.cache_info().hits > hits else 'missed'}')
+            f'Cache for {func.__name__}({func_args}) {'hit' if func.cache_info().hits > hits else 'missed'}'
+        )
 
         return func_return
 

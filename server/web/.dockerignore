@@ -1,2 +1,7 @@
-.idea/*
-logs/*
+.idea
+.venv
+logs
+__pycache__
+.ruff_cache
+
+.python-version

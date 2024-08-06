@@ -5,7 +5,7 @@ import feedparser
 from web.parsers.metadata import SearchMeta
 
 ARXIV_PATTERN = r'(\d{4}.\d{4,5}|[a-z\-]+(\.[A-Z]{2})?/\d{7})'
-ARXIV_ID_PATTERN = re.compile(fr'http://arxiv.org/abs/({ARXIV_PATTERN})')
+ARXIV_ID_PATTERN = re.compile(rf'http://arxiv.org/abs/({ARXIV_PATTERN})')
 
 __all__ = ('extract_metadata', 'check_content_presence')
 
@@ -34,8 +34,10 @@ def _extract_entry_metadata(entry: feedparser.FeedParserDict) -> SearchMeta:
             download_link = related_link.href
             break
 
-    return SearchMeta(title=title,
-                      DOI=f'10.48550/arXiv.{entry_id}',
-                      authors=authors,
-                      abstract=entry.summary,
-                      download_link=download_link)
+    return SearchMeta(
+        title=title,
+        DOI=f'10.48550/arXiv.{entry_id}',
+        authors=authors,
+        abstract=entry.summary,
+        download_link=download_link,
+    )

@@ -3,15 +3,23 @@ import re
 from web.connectors.nlp import extract_keywords, extract_names, remove_stop_words
 from web.utils import responsive_cache
 
-__all__ = ('DOI_PATTERN', 'ARXIV_PATTERN', 'extract_dois', 'extract_arxiv_ids', 'extract_keywords',
-           'extract_names', 'remove_stop_words', 'clear_query')
+__all__ = (
+    'DOI_PATTERN',
+    'ARXIV_PATTERN',
+    'extract_dois',
+    'extract_arxiv_ids',
+    'extract_keywords',
+    'extract_names',
+    'remove_stop_words',
+    'clear_query',
+)
 
 # following CrossRef's recommendation: https://www.crossref.org/blog/dois-and-matching-regular-expressions
 DOI_PATTERN = re.compile(r'10.\d{4,9}/[-._;()/:a-zA-Z0-9]+')
 
 # source: https://info.arxiv.org/help/arxiv_identifier_for_services.html
 ARXIV_PATTERN = re.compile(r'(\d{4}.\d{4,5}|[a-z\-]+(\.[A-Z]{2})?/\d{7})(v\d+)?')
-STRICT_ARXIV_PATTERN = re.compile(fr'arXiv\.{ARXIV_PATTERN.pattern}')
+STRICT_ARXIV_PATTERN = re.compile(rf'arXiv\.{ARXIV_PATTERN.pattern}')
 
 
 @responsive_cache

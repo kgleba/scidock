@@ -14,11 +14,12 @@ UA = UserAgent()
 
 # a list of publishers who are known to provide only private access to their works
 # blacklist should be made more configurable in the future
-PUBLISHER_BLACKLIST = ['10.1016',  # Elsevier
-                       '10.1007',  # Springer
-                       '10.1201',  # Taylor & Francis
-                       '10.4324',  # Taylor & Francis
-                       ]
+PUBLISHER_BLACKLIST = [
+    '10.1016',  # Elsevier
+    '10.1007',  # Springer
+    '10.1201',  # Taylor & Francis
+    '10.4324',  # Taylor & Francis
+]
 
 
 async def get_download_link(doi: str, session: aiohttp.ClientSession) -> LinkMeta:
@@ -26,7 +27,7 @@ async def get_download_link(doi: str, session: aiohttp.ClientSession) -> LinkMet
         return EmptyLinkMeta
 
     if doi.startswith('10.48550'):
-        arxiv_id = re.match(fr'10\.48550/arXiv.({ARXIV_PATTERN.pattern})', doi).group(1)
+        arxiv_id = re.match(rf'10\.48550/arXiv.({ARXIV_PATTERN.pattern})', doi).group(1)
         return LinkMeta(f'https://arxiv.org/pdf/{arxiv_id}', guarantee=True)
 
     logger.info(f'Attempting to follow a DOI redirect with DOI = {doi}')
@@ -38,10 +39,11 @@ async def get_download_link(doi: str, session: aiohttp.ClientSession) -> LinkMet
 
     try:
         async with asyncio.timeout(2):
-            publisher_page = await session.get(f'https://doi.org/{doi}',
-                                               headers={'User-Agent': UA.random})
+            publisher_page = await session.get(
+                f'https://doi.org/{doi}', headers={'User-Agent': UA.random}
+            )
     except (TimeoutError, aiohttp.client_exceptions.ClientConnectorError):
-        logger.warning(f'Publisher\'s page timed out for {doi = }')
+        logger.warning(f"Publisher's page timed out for {doi = }")
         return EmptyLinkMeta
 
     soup = BeautifulSoup(await publisher_page.text(encoding='latin-1'), 'html.parser')
@@ -52,18 +54,19 @@ async def get_download_link(doi: str, session: aiohttp.ClientSession) -> LinkMet
     publisher_url = str(publisher_page.url)
 
     if publisher_page.headers.get('Content-Type') in (
-            'application/pdf', 'application/octet-stream'):
+        'application/pdf',
+        'application/octet-stream',
+    ):
         logger.info('DOI redirected to a page with plain PDF')
 
-        # for compatibility with `requests` implementation
-        # `__str__` is chosen instead of `human_repr`
         return LinkMeta(publisher_url, guarantee=True)
 
     if doi.startswith('10.1109') or 'IEEE' in title:  # IEEE publisher
         logger.info('DOI redirected to a page of a known publisher: IEEE')
 
-        metadata_pattern = re.compile(r'xplGlobal.document.metadata=(.*?});',
-                                      re.MULTILINE | re.DOTALL)
+        metadata_pattern = re.compile(
+            r'xplGlobal.document.metadata=(.*?});', re.MULTILINE | re.DOTALL
+        )
         script = soup.find('script', string=metadata_pattern)
         if script is None:
             return EmptyLinkMeta
@@ -90,23 +93,22 @@ async def get_download_link(doi: str, session: aiohttp.ClientSession) -> LinkMet
 
         return LinkMeta(download_link, guarantee=True)
 
-    download_text_match = soup.find(string=re.compile(r'\bdownload\b', re.IGNORECASE))
-    pdf_text_match = soup.find(string=re.compile('PDF', re.IGNORECASE))
-    if download_text_match is not None or pdf_text_match is not None:
+    positive_patterns = [r'\bdownload\b', 'PDF']
+    negative_patterns = ['only available via PDF', 'PDF is available to Subscribers']
+
+    positive_patterns = [re.compile(pattern, flags=re.IGNORECASE) for pattern in positive_patterns]
+    negative_patterns = [re.compile(pattern, flags=re.IGNORECASE) for pattern in negative_patterns]
+
+    positive_matches = [soup.find(string=pattern) is not None for pattern in positive_patterns]
+    negative_matches = [soup.find(string=pattern) is not None for pattern in negative_patterns]
+
+    # TODO: adjust positive/negative matches policies
+    #  (whether presence of only one negative match should dismiss the entire result)
+
+    if any(positive_matches) and not any(negative_matches):
         return LinkMeta(publisher_url, guarantee=False)
 
     # TODO: add additional checks for match validity
-    # i.e., checks for presence of collocations like "institutional access"
+    #  i.e., checks for presence of collocations like "institutional access"
 
     return EmptyLinkMeta
-
-
-async def main():
-    async with aiohttp.ClientSession() as session:
-        # return await get_download_link('10.1109/ACCESS.2022.3143524', session)
-        # return await get_download_link('10.5772/intechopen.1006093', session) # TODO: breaking!
-        return await get_download_link('10.5772/intechopen.111651', session)
-
-
-if __name__ == '__main__':
-    print(asyncio.run(main()))

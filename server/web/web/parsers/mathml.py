@@ -10,9 +10,27 @@ from defusedxml import ElementTree as DET  # noqa: N814 - naming convention for 
 NODE_TAGS = ('mfenced', 'mfrac', 'msub', 'msubsup', 'msup', 'mroot')
 LEAF_TAGS = ('mi', 'mn', 'mo', 'msqrt', 'ms')
 IRRELEVANT_TAGS = (
-    'maction', 'menclose', 'merror', 'mglyph', 'mlabeledtr', 'mmultiscripts', 'mover', 'mpadded',
-    'mphantom', 'mrow', 'style', 'mspace',
-    'mtable', 'mtd', 'mtext', 'mtr', 'mth', 'munder', 'munderover', 'semantics')
+    'maction',
+    'menclose',
+    'merror',
+    'mglyph',
+    'mlabeledtr',
+    'mmultiscripts',
+    'mover',
+    'mpadded',
+    'mphantom',
+    'mrow',
+    'style',
+    'mspace',
+    'mtable',
+    'mtd',
+    'mtext',
+    'mtr',
+    'mth',
+    'munder',
+    'munderover',
+    'semantics',
+)
 
 
 def parse_document(document: str):
@@ -28,7 +46,7 @@ def parse_document(document: str):
         start, end = math_tag.span()
 
         document_chars = list(document)
-        document_chars[start + index_delta:end + index_delta] = list(new_value)
+        document_chars[start + index_delta : end + index_delta] = list(new_value)
         document = ''.join(document_chars)
 
         index_delta += len(new_value) - (end - start)
@@ -38,14 +56,16 @@ def parse_document(document: str):
 
 def extract_source(element: ET.Element) -> str:
     tag = re.sub('({[^}]*})?([^>]*)', r'\2', element.tag)
-    text = element.text if not list(element) else ''.join(
-        extract_source(child) for child in element)
+    text = (
+        element.text if not list(element) else ''.join(extract_source(child) for child in element)
+    )
     formatted_attrs = ' '.join(f'{key}="{value}"' for key, value in element.items())
     return f'<{tag} {formatted_attrs}>{text}</{tag}>'
 
 
-def dynamic_join(separators: str, source: Callable[[int], Any],
-                 n_elements: int | None = None) -> str:
+def dynamic_join(
+    separators: str, source: Callable[[int], Any], n_elements: int | None = None
+) -> str:
     if n_elements is None:
         n_elements = len(separators) + 1
 
@@ -84,9 +104,11 @@ def parse_tag(tag: str) -> str:
     if root.tag in NODE_TAGS:
         match root.tag:
             case 'mfenced':
-                open_, close, separators = root.attrib.get('open', '('), root.attrib.get('close',
-                                                                                         ')'), root.attrib.get(
-                    'separators', ',')
+                open_, close, separators = (
+                    root.attrib.get('open', '('),
+                    root.attrib.get('close', ')'),
+                    root.attrib.get('separators', ','),
+                )
                 return open_ + join_sources(separators, n_elements=len(list(root))) + close
             case _:
                 return join_sources(tag_separators[root.tag])

@@ -1,8 +1,10 @@
+name: scidock-server
+
 services:
   nlp:
     build:
       context: nlp
-      dockerfile: light.Dockerfile
+      dockerfile: tiny.Dockerfile
     expose:
       - '7234'
   web:

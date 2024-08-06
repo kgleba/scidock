@@ -1,0 +1,6 @@
+version: 2
+updates:
+  - package-ecosystem: 'pip'
+    directory: 'server/web'
+    schedule:
+      interval: 'weekly'
