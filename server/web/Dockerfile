@@ -11,6 +11,8 @@ WORKDIR /app
 COPY --from=build /.venv .venv
 COPY . .
 
+RUN chmod +x /app/etc/run_scripts.sh
+
 ENV PATH="/app/.venv/bin:$PATH"
 
 EXPOSE 5000
