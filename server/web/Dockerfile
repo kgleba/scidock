@@ -11,7 +11,7 @@ WORKDIR /app
 COPY --from=build /.venv .venv
 COPY . .
 
-RUN chmod +x /app/etc/run_scripts.sh
+RUN chmod +x run_tests.sh
 
 ENV PATH="/app/.venv/bin:$PATH"
 
