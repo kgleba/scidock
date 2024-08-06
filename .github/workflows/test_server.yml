@@ -23,7 +23,7 @@ jobs:
           docker compose up -d
           sleep 5
       - name: Run tests inside the 'web' container
-        run: docker exec scidock-server-web-1 '/app/etc/run_tests.sh'
+        run: docker exec scidock-server-web-1 'chmod +x /app/etc/run_tests.sh && /app/etc/run_tests.sh'
       - name: Extract coverage report from the container
         run: docker cp scidock-server-web-1:/app/coverage.json .
       - name: Send coverage reports to Coveralls
