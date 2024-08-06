@@ -29,7 +29,5 @@ jobs:
         run: docker cp scidock-server-web-1:/app/coverage.json .
       - name: Send coverage reports to Coveralls
         uses: coverallsapp/github-action@v2
-        with:
-          format: python
       - name: Shut containers gracefully
         run: docker compose down

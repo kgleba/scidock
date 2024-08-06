@@ -93,8 +93,8 @@ async def get_download_link(doi: str, session: aiohttp.ClientSession) -> LinkMet
 
         return LinkMeta(download_link, guarantee=True)
 
-    positive_patterns = [r'\bdownload\b', 'PDF']
-    negative_patterns = ['only available via PDF', 'PDF is available to Subscribers']
+    positive_patterns = [r'\bdownload\b', 'PDF', 'Open Access']
+    negative_patterns = ['only available via PDF', 'PDF is available to Subscribers', 'Get Access', 'Institutional Access']
 
     positive_patterns = [re.compile(pattern, flags=re.IGNORECASE) for pattern in positive_patterns]
     negative_patterns = [re.compile(pattern, flags=re.IGNORECASE) for pattern in negative_patterns]
