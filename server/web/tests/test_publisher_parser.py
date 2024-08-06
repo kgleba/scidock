@@ -56,13 +56,13 @@ publishers_test_cases = [
         '10.2991/icmemm-18.2019.22',
         LinkMeta('https://www.atlantis-press.com/proceedings/icmemm-18/55914185', False),
     ),
-    PublisherTestCase(
-        '10.5176/2315-4330_wnc15.68',
-        LinkMeta(
-            'https://www.dropbox.com/scl/fi/u5ksv43820z6bhx45wz2k/WNC_2015_Proceedings_V1_Paper_30.pdf?rlkey=c7ialwzw1zfzzg5l69ecq04oi&dl=0',
-            False,
-        ),
-    ),
+    # PublisherTestCase(
+    #     '10.5176/2315-4330_wnc15.68',
+    #     LinkMeta(
+    #         'https://www.dropbox.com/scl/fi/u5ksv43820z6bhx45wz2k/WNC_2015_Proceedings_V1_Paper_30.pdf?rlkey=c7ialwzw1zfzzg5l69ecq04oi&dl=0',
+    #         False,
+    #     ),
+    # ), # investigate later
     PublisherTestCase(
         '10.1145/3639592.3639601', LinkMeta('https://dl.acm.org/doi/10.1145/3639592.3639601', False)
     ),

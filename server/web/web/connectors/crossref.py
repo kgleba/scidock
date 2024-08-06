@@ -38,7 +38,7 @@ async def _perform_query(url: str, parameters: dict[str, str]) -> list[dict]:
 
     async with aiohttp.ClientSession() as session:  # noqa: SIM117
         async with session.get(
-                url, params=parameters, headers={'User-Agent': ETIQUETTE}
+            url, params=parameters, headers={'User-Agent': ETIQUETTE}
         ) as response:
             if response.headers.get('x-api-pool') != 'polite':
                 logger.warning('CrossRef requests currently do not use polite pool!')
