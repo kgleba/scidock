@@ -26,7 +26,7 @@ jobs:
       - name: Run tests inside the 'web' container
         run: docker exec scidock-server-web-1 ./run_tests.sh
       - name: Extract coverage report from the container
-        run: docker cp scidock-server-web-1:/app/coverage.lcov .
+        run: docker cp scidock-server-web-1:/app/coverage.lcov server
       - name: Send coverage reports to Coveralls
         uses: coverallsapp/github-action@v2
         with:
