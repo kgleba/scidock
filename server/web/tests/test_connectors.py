@@ -8,7 +8,7 @@ import pytest
 from web.connectors import arxiv, crossref, nlp, scihub
 from web.parsers.metadata import EmptySearchMeta
 
-arxiv.MAX_RETRIES = 10
+arxiv.MAX_RETRIES = 20
 
 
 @dataclass
