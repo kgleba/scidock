@@ -32,4 +32,6 @@ jobs:
         with:
           base-path: server/web
       - name: Shut containers gracefully
-        run: docker compose down
+        run: |
+          cd server
+          docker compose down
