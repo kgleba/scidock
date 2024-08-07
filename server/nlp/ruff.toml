@@ -1,0 +1,22 @@
+exclude = [
+    ".git",
+]
+
+line-length = 100
+indent-width = 4
+
+target-version = "py312"
+
+[lint]
+select = ["B", "C", "E", "W", "F", "I", "N", "S", "UP", "A", "ISC", "ICN", "G", "RET", "SIM", "TID", "PTH", "PL", "RSE", "RUF", "ERA", "PT", "LOG"]
+ignore = ["ISC001"]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[format]
+quote-style = "single"
