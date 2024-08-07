@@ -70,6 +70,9 @@ async def _get_download_link(search_result: SearchMeta, session: aiohttp.ClientS
     if search_result.download_link:
         return LinkMeta(search_result.download_link, guarantee=True)
 
+    if not search_result.DOI.strip():
+        return EmptyLinkMeta
+
     scihub_result = await scihub.get_download_link(search_result.DOI)
     if scihub_result != EmptyLinkMeta:
         return scihub_result

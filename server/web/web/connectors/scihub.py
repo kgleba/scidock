@@ -98,9 +98,6 @@ HOST_MAPPING = {URL(mirror).host: _parse_scihub for mirror in SCIHUB_MIRRORS} | 
 
 
 async def get_download_link(doi: str) -> LinkMeta:
-    if not doi.strip():
-        return EmptyLinkMeta
-
     doi = doi.strip().lower()
 
     logger.info(f'Attempting to find a file with DOI = {doi} in Sci-Hub DB')

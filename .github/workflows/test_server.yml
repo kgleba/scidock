@@ -31,7 +31,7 @@ jobs:
         uses: coverallsapp/github-action@v2
         with:
           base-path: server/web
-      - name: Shut containers gracefully
+      - name: Shut down containers gracefully
         run: |
           cd server
           docker compose down

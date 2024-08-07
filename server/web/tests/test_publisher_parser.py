@@ -64,8 +64,8 @@ publishers_test_cases = [
         ),
     ),
     # PublisherTestCase(
-    #     '10.1145/3639592.3639601', LinkMeta('https://dl.acm.org/doi/10.1145/3639592.3639601', False)
-    # ), # investigate later
+    #     '10.1145/3639592.3639601', LinkMeta('https://dl.acm.org/doi/10.1145/3639592.3639601', False) # noqa: ERA001 - investigate later
+    # ),
     PublisherTestCase('10.1037/e611302012-003', EmptyLinkMeta),
     PublisherTestCase('10.1061/(asce)st.1943-541x.0003405', EmptyLinkMeta),
     PublisherTestCase('10.1093/oso/9780195098709.001.0001', EmptyLinkMeta),
