@@ -92,15 +92,10 @@ async def session():
 @pytest.mark.asyncio()
 @pytest.mark.parametrize('test_case', search_test_cases)
 async def test_search(test_case: SearchTestCase, session: httpx.AsyncClient):
-    # TODO: might be interested in switching to SSE in all parameter configurations
-    if test_case.attempt_download:
-        async with aconnect_sse(
-            session, 'GET', '/search', params=asdict(test_case)
-        ) as event_source:
-            data = reduce(add, [json.loads(sse.data) async for sse in event_source.aiter_sse()])
-    else:
-        resp = await session.get('/search', params=asdict(test_case))
-        data = resp.json()
+    async with aconnect_sse(
+        session, 'GET', '/search', params=asdict(test_case)
+    ) as event_source:
+        data = reduce(add, [json.loads(sse.data) async for sse in event_source.aiter_sse()])
 
     response_model = {
         'title': str,

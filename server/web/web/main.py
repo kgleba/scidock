@@ -106,6 +106,13 @@ async def generate_results_with_links(
     )
 
 
+def generate_results_without_links(
+    search_results: list[SearchMeta], include_abstract: bool
+) -> Iterator[list[dict]]:
+    result_links = [merge_result_link(result, EmptyLinkMeta, include_abstract) for result in search_results]
+    yield json.dumps(result_links)
+
+
 @app.get('/search')
 async def search(
     query: str,
@@ -123,4 +130,4 @@ async def search(
     if attempt_download:
         return EventSourceResponse(generate_results_with_links(search_results, include_abstract))
 
-    return [merge_result_link(result, EmptyLinkMeta, include_abstract) for result in search_results]
+    return EventSourceResponse(generate_results_without_links(search_results, include_abstract))
