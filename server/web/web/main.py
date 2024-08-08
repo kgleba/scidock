@@ -11,8 +11,8 @@ from sse_starlette.sse import EventSourceResponse
 
 from web.connectors import arxiv, crossref, scihub
 from web.log import logger
+from web.meta.metadata import EmptyLinkMeta, LinkMeta, SearchMeta, merge_result_link
 from web.parsers import publishers
-from web.parsers.metadata import EmptyLinkMeta, LinkMeta, SearchMeta, merge_result_link
 from web.utils import random_chain
 
 

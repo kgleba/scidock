@@ -7,8 +7,8 @@ import aiohttp
 from fake_useragent import UserAgent
 
 from web.log import logger
+from web.meta.metadata import SearchMeta
 from web.parsers.atom import check_content_presence, extract_metadata
-from web.parsers.metadata import SearchMeta
 from web.parsers.query import clear_query, extract_arxiv_ids, extract_names
 
 __all__ = ('search',)

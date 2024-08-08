@@ -6,8 +6,8 @@ from operator import add, itemgetter
 import aiohttp
 
 from web.log import logger
+from web.meta.metadata import SearchMeta
 from web.parsers.mathml import parse_document
-from web.parsers.metadata import SearchMeta
 from web.parsers.query import (
     clear_query,
     extract_dois,

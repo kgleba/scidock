@@ -6,7 +6,7 @@ from itertools import permutations
 import pytest
 
 from web.connectors import arxiv, crossref, nlp, scihub
-from web.parsers.metadata import EmptySearchMeta
+from web.meta.metadata import EmptySearchMeta
 
 arxiv.MAX_RETRIES = 20
 

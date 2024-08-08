@@ -2,7 +2,7 @@ import re
 
 import feedparser
 
-from web.parsers.metadata import SearchMeta
+from web.meta.metadata import SearchMeta
 
 ARXIV_PATTERN = r'(\d{4}.\d{4,5}|[a-z\-]+(\.[A-Z]{2})?/\d{7})'
 ARXIV_ID_PATTERN = re.compile(rf'http://arxiv.org/abs/({ARXIV_PATTERN})')

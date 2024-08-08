@@ -8,8 +8,6 @@ from loguru import logger
 
 __all__ = ('logger',)
 
-Path('logs').mkdir(parents=True, exist_ok=True)
-
 
 # source: https://loguru.readthedocs.io/en/stable/overview.html#entirely-compatible-with-standard-logging
 class InterceptHandler(logging.Handler):
@@ -32,6 +30,8 @@ class InterceptHandler(logging.Handler):
 
 @cache  # ensure that the function gets called only once
 def setup_logging():
+    Path('logs').mkdir(parents=True, exist_ok=True)
+
     logger.remove()
     logger.add(sys.stderr, level='WARNING', format='<level>{level}: {message}</level>')
     logger.add(

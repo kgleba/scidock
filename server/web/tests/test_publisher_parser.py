@@ -7,8 +7,8 @@ import aiohttp
 import pytest
 import pytest_asyncio
 
+from web.meta.metadata import EmptyLinkMeta, LinkMeta
 from web.parsers import publishers
-from web.parsers.metadata import EmptyLinkMeta, LinkMeta
 
 MAX_AVG_EXECUTION_TIME = 0.05
 MAX_EXECUTION_TIME = 5
@@ -63,11 +63,11 @@ publishers_test_cases = [
             False,
         ),
     ),
-    # PublisherTestCase(
-    #     '10.1145/3639592.3639601', LinkMeta('https://dl.acm.org/doi/10.1145/3639592.3639601', False) # noqa: ERA001 - investigate later
-    # ),
+    PublisherTestCase(
+        '10.1145/3639592.3639601', LinkMeta('https://dl.acm.org/doi/10.1145/3639592.3639601', False)
+    ),
+    PublisherTestCase('10.1145/3647782.3647815', EmptyLinkMeta),
     PublisherTestCase('10.1037/e611302012-003', EmptyLinkMeta),
-    PublisherTestCase('10.1061/(asce)st.1943-541x.0003405', EmptyLinkMeta),
     PublisherTestCase('10.1093/oso/9780195098709.001.0001', EmptyLinkMeta),
     PublisherTestCase('10.1063/5.0184450', EmptyLinkMeta),
 ]
@@ -75,7 +75,7 @@ publishers_test_cases = [
 
 # TODO: fix chapters issue for IntechOpen DOI: 10.5772/intechopen.1006093 and add to tests
 # TODO: make "might be interesting" algorithm more robust and add DOIs:
-#  '10.1145/3647782.3647815' as `EmptyLinkMeta`
+#  '10.1061/(asce)st.1943-541x.0003405' as `EmptyLinkMeta`
 
 
 @pytest_asyncio.fixture()

@@ -8,7 +8,9 @@ from fake_useragent import UserAgent
 from yarl import URL
 
 from web.log import logger
-from web.parsers.metadata import EmptyLinkMeta, LinkMeta
+from web.meta.metadata import EmptyLinkMeta, LinkMeta
+
+__all__ = ('get_download_link',)
 
 UA = UserAgent()
 

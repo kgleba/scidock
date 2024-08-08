@@ -1,5 +1,6 @@
 import asyncio
 import json
+import pprint
 import re
 
 import aiohttp
@@ -7,8 +8,11 @@ from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 
 from web.log import logger
-from web.parsers.metadata import EmptyLinkMeta, LinkMeta
+from web.meta.metadata import EmptyLinkMeta, LinkMeta
+from web.meta.publisher_patterns import DominantPair, PatternStatus, Standalone
 from web.parsers.query import ARXIV_PATTERN
+
+__all__ = ('get_download_link',)
 
 UA = UserAgent()
 
@@ -34,23 +38,31 @@ async def _get_publisher_page(
 
 
 def _analyze_generic_content(soup: BeautifulSoup, publisher_url: str) -> LinkMeta:
-    positive_patterns = [r'\bdownload\b', 'PDF']  # , 'Open Access']
-    negative_patterns = [
-        'only available via PDF',
-        'PDF is available to Subscribers',
-        'Get Access',
-    ]  # , 'Institutional Access']
+    patterns = [
+        Standalone(r'\bdownload\b', PatternStatus.NEUTRAL),
+        Standalone('PDF', PatternStatus.NEUTRAL),
+        Standalone('only available via PDF', PatternStatus.NEGATIVE),
+        Standalone('PDF is available to Subscribers', PatternStatus.NEGATIVE),
+        Standalone('Institutional Access', PatternStatus.NEGATIVE),
+        DominantPair(
+            Standalone('Open Access', PatternStatus.POSITIVE),
+            Standalone('Get Access', PatternStatus.NEGATIVE),
+        ),
+    ]
+    matches = [pattern.status(soup) for pattern in patterns]
 
-    positive_patterns = [re.compile(pattern, flags=re.IGNORECASE) for pattern in positive_patterns]
-    negative_patterns = [re.compile(pattern, flags=re.IGNORECASE) for pattern in negative_patterns]
+    patterns_repr = map(str, patterns)
+    matches_repr = map(str, matches)
 
-    positive_matches = [soup.find(string=pattern) is not None for pattern in positive_patterns]
-    negative_matches = [soup.find(string=pattern) is not None for pattern in negative_patterns]
+    match_report = dict(zip(patterns_repr, matches_repr, strict=True))
+    friendly_match_report = pprint.pformat(match_report)
+    logger.info(
+        f'Patterns match report (following DOI redirect to {publisher_url}):\n{friendly_match_report}'
+    )
 
-    # TODO: adjust positive/negative matches policies
-    #  (whether presence of only one negative match should dismiss the entire result)
-
-    if any(positive_matches) and not any(negative_matches):
+    at_least_one_trigger = any(match != PatternStatus.NOT_TRIGGERED for match in matches)
+    no_negatives = all(match != PatternStatus.NEGATIVE for match in matches)
+    if at_least_one_trigger and no_negatives:
         return LinkMeta(publisher_url, guarantee=False)
 
     return EmptyLinkMeta
