@@ -10,6 +10,8 @@ import pytest_asyncio
 from web.meta.metadata import EmptyLinkMeta, LinkMeta
 from web.parsers import publishers
 
+publishers.PUBLISHER_TIMEOUT = 5
+
 MAX_AVG_EXECUTION_TIME = 0.05
 MAX_EXECUTION_TIME = 5
 

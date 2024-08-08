@@ -25,12 +25,14 @@ PUBLISHER_BLACKLIST = [
     '10.4324',  # Taylor & Francis
 ]
 
+PUBLISHER_TIMEOUT = 2
+
 
 async def _get_publisher_page(
     doi: str, session: aiohttp.ClientSession
 ) -> aiohttp.ClientResponse | None:
     try:
-        async with asyncio.timeout(2):
+        async with asyncio.timeout(PUBLISHER_TIMEOUT):
             return await session.get(f'https://doi.org/{doi}', headers={'User-Agent': UA.random})
     except (TimeoutError, aiohttp.client_exceptions.ClientConnectorError):
         logger.warning(f"Publisher's page timed out for {doi = }")

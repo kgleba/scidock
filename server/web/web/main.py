@@ -109,7 +109,9 @@ async def generate_results_with_links(
 def generate_results_without_links(
     search_results: list[SearchMeta], include_abstract: bool
 ) -> Iterator[list[dict]]:
-    result_links = [merge_result_link(result, EmptyLinkMeta, include_abstract) for result in search_results]
+    result_links = [
+        merge_result_link(result, EmptyLinkMeta, include_abstract) for result in search_results
+    ]
     yield json.dumps(result_links)
 
 
