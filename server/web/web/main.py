@@ -102,7 +102,7 @@ async def generate_results_with_links(
 
     logger.info(
         f'Retrieved {links_retrieved} links for {len(search_results)} search results. '
-        f'Ratio: {round(links_retrieved / len(search_results), 3)}'
+        f'Ratio: {round(links_retrieved / len(search_results), 3) if search_results else 1}'
     )
 
 
