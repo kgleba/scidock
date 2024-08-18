@@ -1,5 +1,5 @@
 import re
-import xml.etree.ElementTree as ET  # noqa: N817 - naming convention for ElementTree
+import xml.etree.ElementTree as ET
 from collections.abc import Callable
 from functools import partial
 from itertools import zip_longest

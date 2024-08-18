@@ -8,3 +8,6 @@ server/web/web/__pycache__/*
 server/web/web/connectors/__pycache__/*
 server/web/web/log/__pycache__/*
 server/web/web/parsers/__pycache__/*
+
+# preferred option is docker compose though!
+server/production.Dockerfile

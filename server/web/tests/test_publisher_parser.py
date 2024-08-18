@@ -95,7 +95,7 @@ def test_publisher_rejection_coverage():
     )
 
 
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 @pytest.mark.parametrize('test_case', reject_test_cases)
 async def test_publisher_rejection(test_case: str, session: aiohttp.ClientSession):
     n_runs = 1_000
@@ -113,7 +113,7 @@ async def test_publisher_rejection(test_case: str, session: aiohttp.ClientSessio
     assert avg_execution_time < MAX_AVG_EXECUTION_TIME
 
 
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 @pytest.mark.parametrize('test_case', publishers_test_cases)
 async def test_publisher(test_case: PublisherTestCase, session: aiohttp.ClientSession):
     download_link = await publishers.get_download_link(test_case.doi, session)

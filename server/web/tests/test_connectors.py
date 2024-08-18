@@ -118,7 +118,7 @@ scihub_test_cases = [
 ]
 
 
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 @pytest.mark.parametrize('test_case', nlp_test_cases)
 async def test_nlp(test_case: NLPTestCase):
     nlp_edition = await nlp.get_edition()
@@ -147,7 +147,7 @@ async def test_nlp(test_case: NLPTestCase):
             assert clean_query == test_case.expected_clean_query['en_core_web_trf']
 
 
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 @pytest.mark.parametrize('test_case', arxiv_test_cases)
 async def test_arxiv(test_case: arXivTestCase):
     arxiv_results = await arxiv.search(test_case.query, extended=test_case.extended)
@@ -171,7 +171,7 @@ async def test_arxiv(test_case: arXivTestCase):
     assert prefix_titles == test_case.expected_titles
 
 
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 @pytest.mark.parametrize('test_case', crossref_test_cases)
 async def test_crossref(test_case: CrossRefTestCase):
     crossref_results = await crossref.search(test_case.query)
@@ -192,7 +192,7 @@ async def test_crossref(test_case: CrossRefTestCase):
     )  # CrossRef results are not deterministic :(
 
 
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 @pytest.mark.parametrize('test_case', scihub_test_cases)
 async def test_scihub(test_case: SciHubTestCase):
     mirror = await scihub.establish_mirror()
