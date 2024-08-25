@@ -114,6 +114,7 @@ async def test_publisher_rejection(test_case: str, session: aiohttp.ClientSessio
 
 
 @pytest.mark.asyncio
+@pytest.mark.flaky
 @pytest.mark.parametrize('test_case', publishers_test_cases)
 async def test_publisher(test_case: PublisherTestCase, session: aiohttp.ClientSession):
     download_link = await publishers.get_download_link(test_case.doi, session)

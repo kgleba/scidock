@@ -25,6 +25,7 @@ async def lifespan(_: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 PAGE_SIZE = 20
+N_PAGES = (arxiv.DATA_LIMIT + crossref.DATA_LIMIT) // PAGE_SIZE
 
 
 def _merge_search_results(
@@ -130,7 +131,7 @@ async def search(
     search_results = _merge_search_results(query, crossref_results, arxiv_results)
 
     if not search_results:
-        return EventSourceResponse(iter([]))
+        return EventSourceResponse(iter([[] for _ in range(N_PAGES)]))
 
     if attempt_download:
         return EventSourceResponse(generate_results_with_links(search_results, include_abstract))

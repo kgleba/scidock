@@ -148,6 +148,7 @@ async def test_nlp(test_case: NLPTestCase):
 
 
 @pytest.mark.asyncio
+@pytest.mark.flaky
 @pytest.mark.parametrize('test_case', arxiv_test_cases)
 async def test_arxiv(test_case: arXivTestCase):
     arxiv_results = await arxiv.search(test_case.query, extended=test_case.extended)

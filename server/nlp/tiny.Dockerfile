@@ -3,7 +3,7 @@ FROM python:3.12-slim-bookworm AS build
 RUN apt update && apt install -y git wget
 
 RUN pip install uv && uv venv --seed
-RUN uv pip install spacy flask git+https://github.com/kgleba/KeyBERT
+RUN uv pip install spacy==3.7.5 flask git+https://github.com/kgleba/KeyBERT
 
 RUN mkdir -p all-MiniLM-L6-v2 && \
     wget https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/onnx/model.onnx -O all-MiniLM-L6-v2/model.onnx && \
