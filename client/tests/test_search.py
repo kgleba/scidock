@@ -24,6 +24,7 @@ def _init_repo():
 
 
 @pytest.mark.usefixtures('_init_repo')
+@pytest.mark.flaky(max_runs=3)
 @pytest.mark.parametrize('test_case', SEARCH_TEST_CASES)
 def test_search_tui(test_case: SearchTestCase):
     query = test_case.query
@@ -39,12 +40,12 @@ def test_search_tui(test_case: SearchTestCase):
     response = re.sub(ANSI_ESCAPE_PATTERN, '', response)
     response = response.replace('\r', '').replace('\n', '')
 
+    assert 'Download failed' not in response
     assert any(
         verdict in response
         for verdict in (
             'Successfully downloaded the paper!',
             'A downloadable version of this work could not be found automatically :(',
-            'Download failed',
         )
     )
 

@@ -5,16 +5,16 @@ from pathlib import Path
 from threading import Thread
 
 import click
-import httpx
 import orjson
 import questionary
 import validators
-from fake_useragent import UserAgent
-from httpx_sse import connect_sse
+from curl_cffi import requests
+from curl_cffi.const import CurlHttpVersion
 from questionary import ValidationError, Validator
 from rapidfuzz import fuzz, process
 from rapidfuzz.utils import default_process
 from rich.status import Status
+from sseclient import SSEClient
 
 from scidock import interface
 from scidock.config import global_config, repo_config
@@ -29,10 +29,9 @@ from scidock.utils import (
 
 DIVIDING_LINE_BOUNDARY = 5
 FUZZY_MATCH_RATE = 75
+N_EVENTS = 10  # value that should be kept in sync with the `server` configuration
 NOTHING_FOUND_STR = 'Nothing found! :('
 SEARCH_RESULTS = []
-
-UA = UserAgent()
 
 progress_bar = Status('Parsing your query using AI...', spinner='dots2')
 
@@ -72,13 +71,20 @@ def accumulate_search_results(
         'include_abstract': include_abstract,
     }
 
-    with httpx.Client(timeout=None) as client:  # noqa: SIM117, S113
-        with connect_sse(
-            client, 'GET', f'{global_config.server_url}/search', params=request_params
-        ) as event_source:
-            for sse in event_source.iter_sse():
-                data_choices = map(raw_result_to_choice, orjson.loads(sse.data))
-                SEARCH_RESULTS.extend(data_choices)
+    event_source = SSEClient(f'{global_config.server_url}/search', params=request_params)
+    events_received = 0
+    for sse in event_source:
+        if not sse.data.strip():
+            continue
+
+        data_choices = map(raw_result_to_choice, orjson.loads(sse.data))
+        SEARCH_RESULTS.extend(data_choices)
+
+        # we need to explicitly break out of the SSE loop
+        # because `SSEClient` does not provide such functionality
+        events_received += 1
+        if events_received == N_EVENTS:
+            break
 
     if not SEARCH_RESULTS:
         SEARCH_RESULTS = [NOTHING_FOUND_STR]
@@ -245,7 +251,6 @@ def search(
 
 
 def download(search_result: SearchResult, proxy: bool) -> None:
-    headers = {'User-Agent': UA.random}
     proxy = global_config.proxy if proxy else None
 
     logger.info(f'Attempting to download a {search_result = !r} with {proxy = }')
@@ -266,36 +271,43 @@ def download(search_result: SearchResult, proxy: bool) -> None:
     if not download_link.startswith('http'):  # protocol missing
         download_link = 'http://' + download_link
 
-    with httpx.Client(headers=headers, proxy=proxy, timeout=5, follow_redirects=True) as client:
-        try:
-            with client.stream('GET', download_link) as response:
-                if response.status_code != HTTPStatus.OK:
-                    repo_config.add_to_wishlist(search_result)
+    try:
+        response = requests.get(
+            download_link,
+            proxy=proxy,
+            timeout=5,
+            allow_redirects=True,
+            stream=True,
+            http_version=CurlHttpVersion.V1_1,
+            impersonate='chrome',
+        )
+    except requests.RequestsError as e:
+        repo_config.add_to_wishlist(search_result)
 
-                    logger.warning(f'Download failed with {response.status_code = }')
-                    return
-
-                content_type = response.headers.get('Content-Type')
-                if not any(
-                    content_type.startswith(allowed_content_type)
-                    for allowed_content_type in ('application/pdf', 'application/octet-stream')
-                ):
-                    repo_config.add_to_wishlist(search_result)
-
-                    logger.warning(
-                        f'Download failed as Content-Type of the page is "{content_type}"'
-                    )
-                    print(response.read())
-                    return
-
-                with open(repo_config.repo_path / search_result.filename, 'wb') as result_file:
-                    for chunk in response.iter_bytes():
-                        result_file.write(chunk)
-        except httpx.TimeoutException:
-            repo_config.add_to_wishlist(search_result)
-
+        if 'Operation timed out' in str(e) or 'Operation too slow' in str(e):
             logger.warning(f'Download failed as {download_link} is not responding')
-            return
+        else:
+            logger.error(f'Encountered unknown curl error: {e}')
+
+        return
+
+    if response.status_code != HTTPStatus.OK:
+        repo_config.add_to_wishlist(search_result)
+        logger.warning(f'Download failed with {response.status_code = }')
+        return
+
+    content_type = response.headers.get('Content-Type')
+    if not any(
+        content_type.startswith(allowed_content_type)
+        for allowed_content_type in ('application/pdf', 'application/octet-stream')
+    ):
+        repo_config.add_to_wishlist(search_result)
+        logger.warning(f'Download failed as Content-Type of the page is "{content_type}"')
+        return
+
+    with open(repo_config.repo_path / search_result.filename, 'wb') as result_file:
+        for chunk in response.iter_content():
+            result_file.write(chunk)
 
     repo_config.add_to_content(search_result)
 
@@ -307,7 +319,7 @@ def open_pdf(query: str) -> str:
     query_arxiv_ids = extract_arxiv_ids(query)
     query_ids = query_dois + query_arxiv_ids
     if len(query_ids) > 1:
-        raise click.BadParameter('Specified too many IDs: impossible to open single paper')
+        raise click.BadParameter('Specified too many IDs: impossible to open only one paper')
 
     titles = [result['title'] for result in repo_config.content]
     dois = [result['DOI'] for result in repo_config.content]

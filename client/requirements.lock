@@ -10,29 +10,24 @@
 #   universal: false
 
 -e file:.
-anyio==4.4.0
-    # via httpx
 certifi==2024.7.4
-    # via httpcore
-    # via httpx
+    # via curl-cffi
+    # via requests
+cffi==1.17.0
+    # via curl-cffi
+charset-normalizer==3.3.2
+    # via requests
 click==8.1.7
     # via scidock
 colorama==0.4.6
     # via click
     # via loguru
+curl-cffi==0.7.1
+    # via scidock
 fake-useragent==1.5.1
     # via scidock
-h11==0.14.0
-    # via httpcore
-httpcore==1.0.5
-    # via httpx
-httpx==0.27.0
-    # via scidock
-httpx-sse==0.4.0
-    # via scidock
 idna==3.7
-    # via anyio
-    # via httpx
+    # via requests
 loguru==0.7.2
     # via scidock
 markdown-it-py==3.0.0
@@ -43,17 +38,24 @@ orjson==3.10.7
     # via scidock
 prompt-toolkit==3.0.36
     # via questionary
+pycparser==2.22
+    # via cffi
 pygments==2.18.0
     # via rich
 questionary==2.0.1
     # via scidock
 rapidfuzz==3.9.6
     # via scidock
+requests==2.32.3
+    # via sseclient
 rich==13.7.1
     # via scidock
-sniffio==1.3.1
-    # via anyio
-    # via httpx
+six==1.16.0
+    # via sseclient
+sseclient==0.0.27
+    # via scidock
+urllib3==2.2.2
+    # via requests
 validators==0.33.0
     # via scidock
 wcwidth==0.2.13
