@@ -35,7 +35,9 @@ jobs:
       - name: Wait until container starts and establishes connections
         run: sleep 5
       - name: Install project
-        run: pip install -r client/requirements-dev.lock
+        run: |
+          cd client
+          pip install -r requirements-dev.lock
       - name: Run FS pre-init tests
         run: pytest client/tests/test_fs.py -k 'init'
       - name: Run search tests
