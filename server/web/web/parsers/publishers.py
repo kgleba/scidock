@@ -47,6 +47,8 @@ def _analyze_generic_content(soup: BeautifulSoup, publisher_url: str) -> LinkMet
         Standalone('PDF is available to Subscribers', PatternStatus.NEGATIVE),
         Standalone('Add PDF to cart', PatternStatus.NEGATIVE),
         Standalone('Institutional Access', PatternStatus.NEGATIVE),
+        Standalone('Access through your institution', PatternStatus.NEGATIVE),
+        Standalone('Buy this article', PatternStatus.NEGATIVE),
         DominantPair(
             Standalone('Open Access', PatternStatus.POSITIVE),
             Standalone('Get Access', PatternStatus.NEGATIVE),

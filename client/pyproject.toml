@@ -1,0 +1,42 @@
+[project]
+name = "scidock"
+version = "1.0.0"
+description = ""
+authors = [
+    { name = "kgleba", email = "kgleba@yandex.ru" }
+]
+dependencies = [
+    "httpx>=0.27.0",
+    "httpx-sse>=0.4.0",
+    "loguru>=0.7.2",
+    "questionary>=2.0.1",
+    "orjson>=3.10.7",
+    "click>=8.1.7",
+    "validators>=0.33.0",
+    "rich>=13.7.1",
+    "fake-useragent>=1.5.1",
+    "rapidfuzz>=3.9.6",
+]
+readme = "README.md"
+requires-python = ">= 3.12"
+
+[project.scripts]
+scidock = "scidock.main:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.rye]
+managed = true
+dev-dependencies = [
+    "pytest>=8.3.2",
+    "pexpect>=4.9.0",
+]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["scidock"]
+

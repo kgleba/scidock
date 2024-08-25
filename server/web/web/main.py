@@ -129,6 +129,9 @@ async def search(
     )
     search_results = _merge_search_results(query, crossref_results, arxiv_results)
 
+    if not search_results:
+        return EventSourceResponse(iter([]))
+
     if attempt_download:
         return EventSourceResponse(generate_results_with_links(search_results, include_abstract))
 

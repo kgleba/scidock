@@ -8,6 +8,7 @@ wheels/
 
 # venv
 .venv
+.linux_venv
 
 # rye metadata
 .python-version
