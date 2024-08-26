@@ -1,0 +1,15 @@
+name: Stage
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Retrieve server IP
+        run: curl ifconfig.me
+      - name: Spin up Docker containers
+        run: |
+          cd server
+          docker compose up
