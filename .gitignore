@@ -1,5 +1,6 @@
 # JetBrains
 .idea/*
+server/.idea/*
 server/nlp/.idea/*
 server/web/.idea/*
 
@@ -10,4 +11,5 @@ server/web/web/log/__pycache__/*
 server/web/web/parsers/__pycache__/*
 
 # preferred option is docker compose though!
-server/production.Dockerfile
+server/Dockerfile
+server/supervisord.conf

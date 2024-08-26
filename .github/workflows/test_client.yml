@@ -41,7 +41,7 @@ jobs:
       - name: Run FS pre-init tests
         run: pytest client/tests/test_fs.py -k 'init'
       - name: Run search tests
-        run: pytest client/tests/test_search.py -s
+        run: pytest client/tests/test_search.py
       - name: Run FS post-init tests
         run: pytest client/tests/test_fs.py -k 'not init'
       - name: Shut down containers gracefully
