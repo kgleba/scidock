@@ -111,7 +111,7 @@ async def get_download_link(doi: str) -> LinkMeta:
     # anyway, we get the same blocking call using `requests` (which correctly handles the behavior described above)
     try:
         preview_page = requests.get(
-            f'{mirror}/{doi}', headers={'User-Agent': UA.random}, allow_redirects=False, timeout=1
+            f'{mirror}/{doi}', headers={'User-Agent': UA.random}, allow_redirects=False, timeout=3
         )
     except requests.Timeout:
         logger.warning(f'{mirror}/{doi} timed out')

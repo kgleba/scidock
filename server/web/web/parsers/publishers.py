@@ -25,7 +25,7 @@ PUBLISHER_BLACKLIST = [
     '10.4324',  # Taylor & Francis
 ]
 
-PUBLISHER_TIMEOUT = 1
+PUBLISHER_TIMEOUT = 2
 
 
 async def _get_publisher_page(
