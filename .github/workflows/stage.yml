@@ -1,5 +1,6 @@
 name: Stage
 on:
+  push:
   workflow_dispatch:
 
 jobs:
