@@ -15,6 +15,6 @@ jobs:
           cd server
           docker compose up -d
       - name: Forward port 8080 to the remote server
-        run: expect -c 'set timeout -1; spawn ssh -R 8080:0.0.0.0:8080 ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_IP }}; expect "])?"; send "y\n"; expect "password:"; send "${{ secrets.REMOTE_PASSWORD }}\n"; interact'
+        run: expect -c 'set timeout -1; spawn ssh -R 8080:0.0.0.0:8080 ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_IP }}; expect "])?"; send "yes\r"; expect "password:"; send "${{ secrets.REMOTE_PASSWORD }}\r"; interact'
       - name: Run until cancelled
         run: sleep infinity
