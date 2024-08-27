@@ -8,9 +8,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Retrieve server IP
-        run: curl ifconfig.me
+      - name: Install sshpass
+        run: sudo apt install -y sshpass
       - name: Spin up Docker containers
         run: |
           cd server
-          docker compose up
+          docker compose up -d
+      - name: Forward port 8080 to the remote server
+        run: sshpass -R -N 8080:0.0.0.0:8080 ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_IP }} -p ${{ secrets.REMOTE_PASSWORD }}
